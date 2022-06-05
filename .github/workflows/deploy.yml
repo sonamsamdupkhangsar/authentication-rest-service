@@ -1,0 +1,69 @@
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+
+  build:
+    name: Build, push, and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Export project name
+        run: export PROJECT_NAME=$(echo ${{ github.repository }} | cut -d / -f2); echo $PROJECT_NAME
+
+      - name: Checkout main
+        uses: actions/checkout@v2
+
+      - name: Setup Open JDK 16
+        uses: actions/setup-java@v2
+        with:
+          java-version: '16'
+          distribution: 'adopt'
+
+      - name: Publish package
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Build Docker image and push to ghcr.io registry
+        id: docker_build
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{github.repository}}:latest
+          secrets: |
+            GIT_AUTH_TOKEN=${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8CLUSTER_NAME }}
+
+      - name: Deploy to k8 cluster
+        run: |
+          export PROJECT_NAME=$(echo ${{ github.repository }} | cut -d / -f2)
+          helm repo add sonam https://sonamsamdupkhangsar.github.io/sonam-helm-chart/
+          helm upgrade --install --timeout 5m0s \
+            --set "image.repository=ghcr.io/${{github.repository}}" \
+            --set "image.tag=latest" \
+            --set "project=$PROJECT_NAME" \
+            --set "postgres.secretfile=${{ secrets.POSTGRES_SECRET_FILE }}" \
+            --set "postgres.service=${{ secrets.POSTGRES_SERVICE }}" \
+            --set "postgres.dbname=${{ secrets.POSTGRES_DBNAME }}" \
+             $PROJECT_NAME \
+            sonam/mychart -f values.yaml --version 0.1.12 --namespace=backend
+
+
