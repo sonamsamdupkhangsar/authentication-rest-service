@@ -1,9 +1,10 @@
-package me.sonam.account;
+package me.sonam.authentication;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import me.sonam.authentication.handler.AuthenticationHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.RouterOperation;
@@ -30,27 +31,18 @@ public class Router {
     @Bean
     @RouterOperations(
             {
-                    @RouterOperation(path = "/account-api/active/{userId}"
+                    @RouterOperation(path = "/authenticate"
                     , produces = {
-                        MediaType.APPLICATION_JSON_VALUE}, method= RequestMethod.GET,
-                         operation = @Operation(operationId="activeUserId", responses = {
+                        MediaType.APPLICATION_JSON_VALUE}, method= RequestMethod.PUT,
+                         operation = @Operation(operationId="authenticate", responses = {
                             @ApiResponse(responseCode = "200", description = "successful operation"),
                                  @ApiResponse(responseCode = "400", description = "invalid user id")}
-                    )),
-                    @RouterOperation(path = "/account-api/activate/{userId}"
-                            , produces = {
-                            MediaType.APPLICATION_JSON_VALUE}, method= RequestMethod.GET,
-                            operation = @Operation(operationId="activeUserId", responses = {
-                                    @ApiResponse(responseCode = "200", description = "successful operation"),
-                                    @ApiResponse(responseCode = "400", description = "invalid user id")}
-                            ))
+                    ))
             }
     )
-    public RouterFunction<ServerResponse> route(AccountHandler handler) {
-        LOG.info("building router function");
-        return RouterFunctions.route(GET("/active/{userId}").and(accept(MediaType.APPLICATION_JSON)),
-                handler::isAccountActive)
-                .andRoute(POST("activate/{userId}")
-                .and(accept(MediaType.APPLICATION_JSON)), handler::activateAccount);
+    public RouterFunction<ServerResponse> route(AuthenticationHandler handler) {
+        LOG.info("building authenticate router function");
+        return RouterFunctions.route(PUT("/authenticate").and(accept(MediaType.APPLICATION_JSON)),
+                handler::authenticate);
     }
 }

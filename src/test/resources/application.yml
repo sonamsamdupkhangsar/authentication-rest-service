@@ -28,3 +28,10 @@ POSTGRES_USERNAME: dusername
 POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
+
+
+jwt-rest-service: http://127.0.0.1:8001/create/{username}/{audience}/{expireField}/{expireIn}
+audience: sonam.cloud
+expireField: 10 # Hours Per Calendar Api
+expireIn: 24 # expire in 24 hours
+apiKey: yakApiKey

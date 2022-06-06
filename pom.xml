@@ -11,10 +11,10 @@
     </parent>
 
     <groupId>me.sonam</groupId>
-    <artifactId>spring-flux-r2dbc-pgsql-template</artifactId>
+    <artifactId>authentication-rest-service</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>spring-flux-r2dbc-pgsql-template</name>
-    <description>A template
+    <name>authentication-rest-service</name>
+    <description>Loging rest service that generates jwt for user/password and appId
     </description>
 
     <dependencies>
@@ -90,7 +90,7 @@
         <repository>
             <id>github</id>
             <name>GitHub OWNER Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/sonamsamdupkhangsar/spring-flux-r2dbc-pgsql-template</url>
+            <url>https://maven.pkg.github.com/sonamsamdupkhangsar/authentication-rest-service</url>
         </repository>
     </distributionManagement>
 </project>

@@ -1,7 +1,6 @@
 on:
   push:
     branches:
-      - develop
       - main
 
 jobs:
@@ -63,6 +62,7 @@ jobs:
             --set "postgres.secretfile=${{ secrets.POSTGRES_SECRET_FILE }}" \
             --set "postgres.service=${{ secrets.POSTGRES_SERVICE }}" \
             --set "postgres.dbname=${{ secrets.POSTGRES_DBNAME }}" \
+            --set "secretenvs[0].name=apiKey" --set "secretenvs[0].value=${{ secrets.API_KEY }}" \
              $PROJECT_NAME \
             sonam/mychart -f values.yaml --version 0.1.12 --namespace=backend
 

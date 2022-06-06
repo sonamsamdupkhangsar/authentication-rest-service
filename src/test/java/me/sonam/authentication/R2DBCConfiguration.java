@@ -1,4 +1,4 @@
-package me.sonam.account;
+package me.sonam.authentication;
 
 import io.r2dbc.h2.H2ConnectionConfiguration;
 import io.r2dbc.h2.H2ConnectionFactory;
@@ -14,7 +14,7 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 @Configuration
 @EnableR2dbcRepositories
 class R2DBCConfiguration extends AbstractR2dbcConfiguration {
-    private static final Logger LOG = LoggerFactory.getLogger(R2DBCConfiguration.class);
+    private static final Logger LOG = LoggerFactory.getLogger(me.sonam.authentication.R2DBCConfiguration.class);
 
     @Bean
     public H2ConnectionFactory connectionFactory() {

@@ -24,3 +24,8 @@ spring:
     password: ${POSTGRES_PASSWORD}
     properties:
       sslMode: REQUIRE
+
+jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/create/{username}/{audience}/{expireField}/{expireIn}
+audience: sonam.cloud
+expireField: 10 # Hours Per Calendar Api
+expireIn: 24 # expire in 24 hours

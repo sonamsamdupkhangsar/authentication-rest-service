@@ -8,7 +8,7 @@ This is a template project for starting a Spring Webflux with R2DBC for Posgresq
 ```
 mvn spring-boot:run  -Dspring-boot.run.arguments="--POSTGRES_USERNAME=dummy \
                       --POSTGRES_PASSWORD=dummy \
-                      --POSTGRES_DBNAME=account \
+                      --POSTGRES_DBNAME=authentication \
                       --POSTGRES_SERVICE=localhost:5432"
 ```
  
@@ -27,7 +27,7 @@ Build docker image using included Dockerfile.
 ## Deploy Docker image locally
 
 `docker run -e POSTGRES_USERNAME=dummy \
- -e POSTGRES_PASSWORD=dummy -e POSTGRES_DBNAME=account \
+ -e POSTGRES_PASSWORD=dummy -e POSTGRES_DBNAME=authentication \
   -e POSTGRES_SERVICE=localhost:5432 \
  --publish 8080:8080 imageregistry/project-rest-service:1.0`
 
