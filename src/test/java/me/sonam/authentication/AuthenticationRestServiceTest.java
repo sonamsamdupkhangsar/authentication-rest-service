@@ -49,7 +49,7 @@ public class AuthenticationRestServiceTest {
     public void createAuthentication() {
         User user = new User("dummy", "pass", "yakApiKey");
 
-        EntityExchangeResult<String> result = client.put().uri("/create")
+        EntityExchangeResult<String> result = client.post().uri("/authenticate")
                 .bodyValue(user)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
