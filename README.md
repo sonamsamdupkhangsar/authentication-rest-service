@@ -54,3 +54,6 @@ export PGSSLMODE=require;
 psql -U <USER> -d projectdb -h localhost -p 6432
 
 ```
+
+`kubectl port-forward jwt-rest-service-mychart-1238293  8001:8080
+`

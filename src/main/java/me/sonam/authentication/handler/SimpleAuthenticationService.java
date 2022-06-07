@@ -1,6 +1,7 @@
 package me.sonam.authentication.handler;
 
 import me.sonam.authentication.repo.AuthenticationRepository;
+import me.sonam.authentication.repo.entity.Authentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class SimpleAuthenticationService implements AuthenticationService {
@@ -63,7 +66,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .flatMap(user ->
                 authenticationRepository.findByAuthenticationIdAndPassword(user.getAuthenticationId(), user.getPassword()))
                 .flatMap(authentication -> {
-                    LOG.info("does credential exist? {} ", authentication);
+                    LOG.info("does credential exist? {} ", (authentication!=null) ? true : false);
 
                     WebClient.ResponseSpec responseSpec = webClient.get().uri(
                             jwtRestService.replace("{username}", authentication.getAuthenticationId())
@@ -76,6 +79,26 @@ public class SimpleAuthenticationService implements AuthenticationService {
                     });
                 });
 
+    }
+
+    @Override
+    public Mono<String> createAuthentication(Mono<User> userMono) {
+        return userMono
+                .filter(user -> {
+                    if (!user.getApiKey().equals(apiKey)) {
+                        LOG.info("apiKey does not match");
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                })
+                .flatMap(user -> {
+                    Authentication authentication = new Authentication(
+                            user.getAuthenticationId(), user.getPassword(), null, null,
+                            null, true, LocalDateTime.now(), true);
+                    return authenticationRepository.save(authentication);
+                }).map(authentication -> authentication.getAuthenticationId());
     }
 
 }

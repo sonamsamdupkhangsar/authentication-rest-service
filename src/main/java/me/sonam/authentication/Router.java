@@ -43,6 +43,8 @@ public class Router {
     public RouterFunction<ServerResponse> route(AuthenticationHandler handler) {
         LOG.info("building authenticate router function");
         return RouterFunctions.route(PUT("/authenticate").and(accept(MediaType.APPLICATION_JSON)),
-                handler::authenticate);
+                handler::authenticate)
+                .andRoute(PUT("/create").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::createAuthentication);
     }
 }

@@ -7,22 +7,18 @@ import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
 import org.junit.Before;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.server.*;
-import org.springframework.web.reactive.function.server.support.ServerRequestWrapper;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -30,8 +26,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 @EnableAutoConfiguration
@@ -49,6 +43,25 @@ public class AuthenticationRestServiceTest {
     @Test
     public void hello() {
         LOG.info("dummy test method for now");
+    }
+
+    @Test
+    public void createAuthentication() {
+        User user = new User("dummy", "pass", "yakApiKey");
+
+        EntityExchangeResult<String> result = client.put().uri("/create")
+                .bodyValue(user)
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("dummy");
+
+       /* LOG.info("authenticate with the created authentication");
+        client.put().uri("/authenticate")
+                .bodyValue(user)
+                .exchange().expectStatus().isOk().expectBody(String.class).consumeWith(stringEntityExchangeResult -> LOG.info(
+                "response jwt is {}", stringEntityExchangeResult.getResponseBody()));*/
+
     }
 
     public void isAccountActive() {

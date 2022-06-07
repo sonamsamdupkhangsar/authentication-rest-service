@@ -9,4 +9,5 @@ public interface AuthenticationService {
      * @return
      */
     Mono<String> authenticate(Mono<User> userMono);
+    Mono<String> createAuthentication(Mono<User> userMono);
 }

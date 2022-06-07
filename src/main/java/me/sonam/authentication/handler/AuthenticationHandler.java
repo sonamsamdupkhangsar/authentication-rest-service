@@ -18,10 +18,20 @@ public class AuthenticationHandler {
     private AuthenticationService authenticationService;
 
     public Mono<ServerResponse> authenticate(ServerRequest serverRequest) {
-        LOG.info("upload file");
+        LOG.info("authenticate user");
 
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
                 .body(authenticationService.authenticate(serverRequest.bodyToMono(User.class)),
+                        String.class)
+                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
+                        .fromValue(e.getMessage())));
+    }
+
+    public Mono<ServerResponse> createAuthentication(ServerRequest serverRequest) {
+        LOG.info("create authentication");
+
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(authenticationService.createAuthentication(serverRequest.bodyToMono(User.class)),
                         String.class)
                 .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
                         .fromValue(e.getMessage())));
