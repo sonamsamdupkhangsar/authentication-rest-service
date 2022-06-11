@@ -14,8 +14,7 @@
     <artifactId>authentication-rest-service</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>authentication-rest-service</name>
-    <description>Loging rest service that generates jwt for user/password and appId
-    </description>
+    <description>Authentication rest service that creates Authentication and generates jwt for authTransfer/password with apiKey</description>
 
     <dependencies>
         <dependency>

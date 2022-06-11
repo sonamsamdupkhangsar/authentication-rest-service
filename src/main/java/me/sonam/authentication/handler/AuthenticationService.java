@@ -5,9 +5,9 @@ import reactor.core.publisher.Mono;
 public interface AuthenticationService {
     /**
      * this service will authenticate username/password with apikey
-     * @param userMono contains the username and password
+     * @param authTransferMono contains the usernam,password
      * @return
      */
-    Mono<String> authenticate(Mono<User> userMono);
-    Mono<String> createAuthentication(Mono<User> userMono);
+    Mono<String> authenticate(Mono<AuthTransfer> authTransferMono);
+    Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono);
 }

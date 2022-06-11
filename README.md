@@ -1,7 +1,8 @@
-# project-rest-service
+# authentication-rest-service
 
-This is a template project for starting a Spring Webflux with R2DBC for Posgresql Maven based project.
-
+This is the Authentication rest service.  It is used internally by the 
+user-rest-service during user-signup and also can be used for authentication
+using username/password and api-key to generate a JWT.
 
 ## Run locally
 

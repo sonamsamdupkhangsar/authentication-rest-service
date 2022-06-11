@@ -1,8 +1,8 @@
 package me.sonam.authentication;
 
+import me.sonam.authentication.handler.AuthTransfer;
 import me.sonam.authentication.handler.AuthenticationHandler;
 import me.sonam.authentication.handler.AuthenticationService;
-import me.sonam.authentication.handler.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,7 +57,7 @@ public class AuthenticationMockRestServiceTest {
 
         LOG.info("authenticate");
         webTestClient.put().uri("/authenticate")
-                .bodyValue(new User("yakuser", "pass", "apikey"))
+                .bodyValue(new AuthTransfer("yakuser", "pass", "apikey"))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)
                 .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));

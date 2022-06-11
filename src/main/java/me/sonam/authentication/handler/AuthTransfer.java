@@ -3,15 +3,15 @@ package me.sonam.authentication.handler;
 /**
  * this is for parsing the data from serverrequest body to this object
  */
-public class User {
+public class AuthTransfer {
     private String authenticationId;
     private String password;
     private String apiKey;
 
-    public User() {
+    public AuthTransfer() {
 
     }
-    public User(String authenticationId, String password, String apiKey) {
+    public AuthTransfer(String authenticationId, String password, String apiKey) {
         this.authenticationId = authenticationId;
         this.password = password;
         this.apiKey = apiKey;

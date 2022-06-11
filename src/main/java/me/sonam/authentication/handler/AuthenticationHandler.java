@@ -21,7 +21,7 @@ public class AuthenticationHandler {
         LOG.info("authenticate user");
 
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(authenticationService.authenticate(serverRequest.bodyToMono(User.class)),
+                .body(authenticationService.authenticate(serverRequest.bodyToMono(AuthTransfer.class)),
                         String.class)
                 .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
                         .fromValue(e.getMessage())));
@@ -31,7 +31,7 @@ public class AuthenticationHandler {
         LOG.info("create authentication");
 
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(authenticationService.createAuthentication(serverRequest.bodyToMono(User.class)),
+                .body(authenticationService.createAuthentication(serverRequest.bodyToMono(AuthTransfer.class)),
                         String.class)
                 .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
                         .fromValue(e.getMessage())));
