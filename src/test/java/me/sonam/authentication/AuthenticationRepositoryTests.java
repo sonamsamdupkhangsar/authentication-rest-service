@@ -18,10 +18,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * This is for testing the {@link AuthenticationRepository} interface
+ */
 @ExtendWith(SpringExtension.class)
 @DataR2dbcTest
 public class AuthenticationRepositoryTests {
-    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationRestServiceTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationRepositoryTests.class);
 
     @Autowired
     private DatabaseClient databaseClient;

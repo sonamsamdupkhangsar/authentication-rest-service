@@ -20,20 +20,21 @@ public class AuthenticationHandler {
     public Mono<ServerResponse> authenticate(ServerRequest serverRequest) {
         LOG.info("authenticate user");
 
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(authenticationService.authenticate(serverRequest.bodyToMono(AuthTransfer.class)),
-                        String.class)
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+        return authenticationService.authenticate(serverRequest.bodyToMono(AuthTransfer.class))
+                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable ->
+                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(throwable.getMessage()));
+
     }
 
     public Mono<ServerResponse> createAuthentication(ServerRequest serverRequest) {
         LOG.info("create authentication");
 
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(authenticationService.createAuthentication(serverRequest.bodyToMono(AuthTransfer.class)),
-                        String.class)
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+        return authenticationService.createAuthentication(serverRequest.bodyToMono(AuthTransfer.class))
+                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable ->
+                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(throwable.getMessage()));
     }
 }

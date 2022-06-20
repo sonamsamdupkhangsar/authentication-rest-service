@@ -48,6 +48,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
     @PostConstruct
     public void setWebClient() {
+        LOG.info("built webclient");
         webClient = WebClient.builder().build();
     }
 
@@ -63,16 +64,18 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         return true;
                     }
                 })
+                .switchIfEmpty(Mono.error(new AuthenticationException("apikey check fail")))
+                .flatMap(authTransfer -> authenticationRepository.findByAuthenticationIdAndPassword(
+                        authTransfer.getAuthenticationId(), authTransfer.getPassword()).zipWith(Mono.just(authTransfer.getApiKey())))
+                .switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username or password")))
                 .flatMap(user ->
-                authenticationRepository.findByAuthenticationIdAndPassword(user.getAuthenticationId(), user.getPassword()))
-                .flatMap(authentication -> {
-                    LOG.info("does credential exist? {} ", (authentication!=null) ? true : false);
-
+                {
                     WebClient.ResponseSpec responseSpec = webClient.get().uri(
-                            jwtRestService.replace("{username}", authentication.getAuthenticationId())
+                            jwtRestService.replace("{username}", user.getT1().getAuthenticationId())
                                     .replace("{audience}", audience)
                                     .replace("{expireField}", expireField)
-                                    .replace("{expireIn}", expireIn)).retrieve();
+                                    .replace("{expireIn}", expireIn))
+                            .header("apikey", user.getT2()).retrieve();
                     return responseSpec.bodyToMono(String.class).map(jwtToken -> {
                         LOG.info("got jwt token: {}", jwtToken);
                         return jwtToken;
@@ -97,17 +100,18 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .flatMap(authTransfer -> authenticationRepository.findById(authTransfer.getAuthenticationId()).switchIfEmpty(Mono.just(new Authentication())).zipWith(Mono.just(authTransfer)))
                 .filter(objects -> {
                     LOG.info("objects.t1 {}, t2: {}", objects.getT1(), objects.getT2());
-                    LOG.info("objects.t1.id should be null to indicate no entity was found with this authenticationId");
+                    LOG.info("objects.t1.id should be null to indicate no entity was found with this authenticationId: {}",
+                    objects.getT1().getId());
                     return objects.getT1().getId() == null;
                 })
                 .switchIfEmpty(Mono.error(new RuntimeException("authenticationId already exists")))
                 .flatMap(objects -> {
+                    LOG.info("create authentication");
                     Authentication authentication = new Authentication(
                             objects.getT2().getAuthenticationId(), objects.getT2().getPassword(), null, null,
                             null, true, LocalDateTime.now(), true);
                     return authenticationRepository.save(authentication);
-                }).map(authentication -> "create Authentication success for authId: " + authentication.getAuthenticationId())
-                .onErrorResume(throwable -> Mono.just("Authentication creation fail, error: " + throwable.getMessage()));
+                }).map(authentication -> "create Authentication success for authId: " + authentication.getAuthenticationId());
     }
 
 }

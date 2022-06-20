@@ -22,10 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
+/**
+ * this will test routing to the #{@link AuthenticationHandler}
+ * service is mocked.
+ */
 @ExtendWith(MockitoExtension.class)
 public class AuthenticationMockRestServiceTest {
-    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationRestServiceTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationMockRestServiceTest.class);
 
     private final ServerRequest mockServerRequest = mock(ServerRequest.class);
     private final ServerRequestWrapper mockServerRequestWrapper = new ServerRequestWrapper(
@@ -44,7 +47,7 @@ public class AuthenticationMockRestServiceTest {
         LOG.info("setup mock");
         MockitoAnnotations.openMocks(this);
         RouterFunction<ServerResponse> routerFunction = RouterFunctions
-                .route(RequestPredicates.PUT("/authenticate"),
+                .route(RequestPredicates.POST("/authenticate"),
                         handler::authenticate);
         this.webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();
     }
@@ -56,7 +59,7 @@ public class AuthenticationMockRestServiceTest {
         assertThat(webTestClient).isNotNull();
 
         LOG.info("authenticate");
-        webTestClient.put().uri("/authenticate")
+        webTestClient.post().uri("/authenticate")
                 .bodyValue(new AuthTransfer("yakuser", "pass", "apikey"))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)
