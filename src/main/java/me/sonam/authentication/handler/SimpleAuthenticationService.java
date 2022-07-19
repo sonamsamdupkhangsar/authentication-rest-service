@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class SimpleAuthenticationService implements AuthenticationService {
@@ -112,6 +113,18 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             null, true, LocalDateTime.now(), true);
                     return authenticationRepository.save(authentication);
                 }).map(authentication -> "create Authentication success for authId: " + authentication.getAuthenticationId());
+    }
+
+    @Override
+    public Mono<String> updatePassword(Mono<String> passwordMono, String authenticationId) {
+        return passwordMono.flatMap(password -> authenticationRepository.updatePassword(password, authenticationId))
+                .thenReturn("password updated");
+    }
+
+    @Override
+    public Mono<String> updateRoleId(Mono<String> uuidStringMono, String authenticationId) {
+        return uuidStringMono.flatMap(roleId -> authenticationRepository.updateRoleId(UUID.fromString(roleId), authenticationId))
+                .thenReturn("password updated");
     }
 
 }

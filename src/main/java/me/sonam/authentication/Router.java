@@ -42,9 +42,13 @@ public class Router {
     )
     public RouterFunction<ServerResponse> route(AuthenticationHandler handler) {
         LOG.info("building authenticate router function");
-        return RouterFunctions.route(POST("/authenticate").and(accept(MediaType.APPLICATION_JSON)),
+        return RouterFunctions.route(POST("/public/authentication/authenticate").and(accept(MediaType.APPLICATION_JSON)),
                 handler::authenticate)
-                .andRoute(POST("/create").and(accept(MediaType.APPLICATION_JSON)),
-                        handler::createAuthentication);
+                .andRoute(POST("/public/authentication/create").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::createAuthentication)
+                .andRoute(PUT("/authentication/password").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::updatePassword)
+                .andRoute(PUT("/authentication/roleid").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::updateRoleId);
     }
 }

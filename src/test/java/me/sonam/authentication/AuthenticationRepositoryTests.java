@@ -2,6 +2,7 @@ package me.sonam.authentication;
 
 import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -32,6 +33,11 @@ public class AuthenticationRepositoryTests {
     @Autowired
     private AuthenticationRepository authenticationRepository;
 
+    @AfterEach
+    public void deleteAll() {
+        authenticationRepository.deleteAll().subscribe();
+    }
+
     @Test
     public void saveAuthenticate() {
         Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
@@ -57,4 +63,45 @@ public class AuthenticationRepositoryTests {
                 })
                 .verifyComplete();
     }
+
+    @Test
+    public void updatePassword() {
+        LOG.info("save authentication object");
+        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe();
+
+        LOG.info("update password");
+        authenticationRepository.updatePassword("newpass", "Yakman").subscribe();
+
+        authenticationRepository.findById("Yakman").as(StepVerifier::create)
+                .expectNextMatches(authentication1 -> {
+                    LOG.info("assert the newpass password: {}", authentication1.getPassword());
+                    return authentication1.getPassword().equals("newpass");
+                }
+                )
+                .expectComplete().verify();
+    }
+
+    @Test
+    public void updateRoleId() {
+        LOG.info("save authentication object");
+        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe();
+
+        LOG.info("update roleId");
+        UUID uuid = UUID.randomUUID();
+        authenticationRepository.updateRoleId(uuid, "Yakman").subscribe();
+
+        authenticationRepository.findById("Yakman").as(StepVerifier::create)
+                .expectNextMatches(authentication1 -> {
+                            LOG.info("assert role '{}' matches with the roleId: {}", uuid, authentication1.getRoleId());
+                            return authentication1.getRoleId().equals(uuid);
+                        }
+                )
+                .expectComplete().verify();
+    }
+
+
 }

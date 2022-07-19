@@ -10,6 +10,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @Service
 public class AuthenticationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationHandler.class);
@@ -32,6 +34,26 @@ public class AuthenticationHandler {
         LOG.info("create authentication");
 
         return authenticationService.createAuthentication(serverRequest.bodyToMono(AuthTransfer.class))
+                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable ->
+                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(throwable.getMessage()));
+    }
+
+    public Mono<ServerResponse> updatePassword(ServerRequest serverRequest) {
+        LOG.info("create authentication");
+        return authenticationService.updatePassword(serverRequest.bodyToMono(String.class),
+                serverRequest.headers().firstHeader("authId"))
+                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable ->
+                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(throwable.getMessage()));
+    }
+
+    public Mono<ServerResponse> updateRoleId(ServerRequest serverRequest) {
+        LOG.info("create authentication");
+        return authenticationService.updateRoleId(serverRequest.bodyToMono(String.class),
+                serverRequest.headers().firstHeader("authId"))
                 .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable ->
                         ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)

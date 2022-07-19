@@ -99,7 +99,7 @@ public class AuthenticationEndpointMockWebServerTest {
     public void createAuthenticationApiKeyFail() {
         AuthTransfer authTransfer = new AuthTransfer("user1", "pass", "123WrongApiKey");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/create")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentication/create")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -117,7 +117,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         AuthTransfer authTransfer = new AuthTransfer("user2", "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/create")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentication/create")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -138,7 +138,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
 
         LOG.info("call authenticate rest endpoint in this application");
-        webTestClient.post().uri("/authenticate")
+        webTestClient.post().uri("/public/authentication/authenticate")
                 .bodyValue(new AuthTransfer("user3", "yakpass", apiKey))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)
@@ -164,7 +164,7 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("create authTransfer");
         AuthTransfer authTransfer = new AuthTransfer("user4", "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/create")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentication/create")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
@@ -176,7 +176,7 @@ public class AuthenticationEndpointMockWebServerTest {
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(jwt));
 
         LOG.info("call authenticate rest endpoint in this application");
-        webTestClient.post().uri("/authenticate")
+        webTestClient.post().uri("/public/authentication/authenticate")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)
@@ -198,7 +198,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         LOG.info("now use a bad username to authenticate locally");
         authTransfer.setAuthenticationId("invaliduser");
-        result = webTestClient.post().uri("/authenticate")
+        result = webTestClient.post().uri("/public/authentication/authenticate")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
