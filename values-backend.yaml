@@ -54,7 +54,7 @@ ingress:
       hosts:
         - "*.sonam.cloud"
 
-ingressjwtrequired:
+ingress_jwt_enabled:
   enabled: true
   ingressClass: nginx
   annotations:

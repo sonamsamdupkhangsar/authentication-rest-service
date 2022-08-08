@@ -50,7 +50,7 @@ public class AuthenticationRestTest {
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
 
         LOG.info("call authentication/password update");
-        webTestClient.put().uri("/authentication/password")
+        webTestClient.put().uri("/authentications/password")
                 .bodyValue("newPass")
                 .headers(httpHeaders -> httpHeaders.set("authId", "user3"))
                 .exchange().expectStatus().isOk()
@@ -74,7 +74,7 @@ public class AuthenticationRestTest {
         UUID uuid = UUID.randomUUID();
 
         LOG.info("call authentication roleid update");
-        webTestClient.put().uri("/authentication/roleid")
+        webTestClient.put().uri("/authentications/roleid")
                 .bodyValue(uuid.toString())
                 .headers(httpHeaders -> httpHeaders.set("authId", "user3"))
                 .exchange().expectStatus().isOk()
