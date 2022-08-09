@@ -94,25 +94,12 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("updated jwt-rest-service property");
     }
 
-
-    @Test
-    public void createAuthenticationApiKeyFail() {
-        AuthTransfer authTransfer = new AuthTransfer("user1", "pass", "123WrongApiKey");
-
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications")
-                .bodyValue(authTransfer)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
-
-        LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("apikey check fail");
-    }
-
     @Test
     public void createAuthenticationAuthAlreadyExists() {
         Authentication authentication = new Authentication("user2", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(), true, LocalDateTime.now(), true);
 
-        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cauase save"));
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cause save"));
 
 
         AuthTransfer authTransfer = new AuthTransfer("user2", "pass", apiKey);
@@ -122,7 +109,7 @@ public class AuthenticationEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("authenticationId already exists");
+        assertThat(result.getResponseBody()).isEqualTo("create Authentication failed, authenticationId is already used");
     }
 
     @Test

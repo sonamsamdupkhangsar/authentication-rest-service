@@ -56,27 +56,17 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Override
     public Mono<String> authenticate(Mono<AuthTransfer> authTransferMono) {
         return authTransferMono
-                .filter(user -> {
-                    if (!user.getApiKey().equals(apiKey)) {
-                        LOG.info("apiKey does not match");
-                        return false;
-                    }
-                    else {
-                        return true;
-                    }
-                })
-                .switchIfEmpty(Mono.error(new AuthenticationException("apikey check fail")))
                 .flatMap(authTransfer -> authenticationRepository.findByAuthenticationIdAndPassword(
-                        authTransfer.getAuthenticationId(), authTransfer.getPassword()).zipWith(Mono.just(authTransfer.getApiKey())))
+                        authTransfer.getAuthenticationId(), authTransfer.getPassword()))
                 .switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username or password")))
-                .flatMap(user ->
+                .flatMap(authentication ->
                 {
                     WebClient.ResponseSpec responseSpec = webClient.get().uri(
-                            jwtRestService.replace("{username}", user.getT1().getAuthenticationId())
+                            jwtRestService.replace("{username}",authentication.getAuthenticationId())
                                     .replace("{audience}", audience)
                                     .replace("{expireField}", expireField)
                                     .replace("{expireIn}", expireIn))
-                            .header("apikey", user.getT2()).retrieve();
+                          .retrieve();
                     return responseSpec.bodyToMono(String.class).map(jwtToken -> {
                         LOG.info("got jwt token: {}", jwtToken);
                         return jwtToken;
@@ -88,31 +78,19 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Override
     public Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono) {
         return authTransferMono
-                .filter(authTransfer -> {
-                    if (!authTransfer.getApiKey().equals(apiKey)) {
-                        LOG.info("apiKey does not match");
-                        return false;
-                    }
-                    else {
-                        return true;
-                    }
-                })
-                .switchIfEmpty(Mono.error(new RuntimeException("apikey check fail")))
-                .flatMap(authTransfer -> authenticationRepository.findById(authTransfer.getAuthenticationId()).switchIfEmpty(Mono.just(new Authentication())).zipWith(Mono.just(authTransfer)))
-                .filter(objects -> {
-                    LOG.info("objects.t1 {}, t2: {}", objects.getT1(), objects.getT2());
-                    LOG.info("objects.t1.id should be null to indicate no entity was found with this authenticationId: {}",
-                    objects.getT1().getId());
-                    return objects.getT1().getId() == null;
-                })
-                .switchIfEmpty(Mono.error(new RuntimeException("authenticationId already exists")))
-                .flatMap(objects -> {
-                    LOG.info("create authentication");
-                    Authentication authentication = new Authentication(
-                            objects.getT2().getAuthenticationId(), objects.getT2().getPassword(), null, null,
-                            null, true, LocalDateTime.now(), true);
-                    return authenticationRepository.save(authentication);
-                }).map(authentication -> "create Authentication success for authId: " + authentication.getAuthenticationId());
+                .flatMap(authTransfer -> authenticationRepository.existsByAuthenticationId(authTransfer.getAuthenticationId())
+                        .doOnNext(aBoolean -> LOG.info("aBoolean is {}", aBoolean))
+                        .filter(aBoolean -> !aBoolean)
+                        .switchIfEmpty(Mono.error(new AuthenticationException("create Authentication failed, authenticationId is already used")))
+                        .flatMap(aBoolean -> {
+                            LOG.info("create authentication");
+                            return Mono.just(new Authentication(
+                                    authTransfer.getAuthenticationId(), authTransfer.getPassword(), null, null,
+                                    null, true, LocalDateTime.now(), true));
+                        })
+                        .flatMap(authentication -> authenticationRepository.save(authentication))
+                        .flatMap(authentication1 -> Mono.just("create Authentication success for authId: " + authentication1.getAuthenticationId())));
+
     }
 
     @Override
