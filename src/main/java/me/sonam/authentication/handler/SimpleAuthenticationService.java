@@ -77,6 +77,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
     @Override
     public Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono) {
+        LOG.info("Create authentication");
         return authTransferMono
                 .flatMap(authTransfer -> authenticationRepository.existsByAuthenticationId(authTransfer.getAuthenticationId())
                         .doOnNext(aBoolean -> LOG.info("aBoolean is {}", aBoolean))
