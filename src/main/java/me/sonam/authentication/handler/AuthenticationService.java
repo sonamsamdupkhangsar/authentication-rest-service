@@ -14,6 +14,8 @@ public interface AuthenticationService {
     Mono<String> authenticate(Mono<AuthTransfer> authTransferMono);
     // no jwt required
     Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono);
+    // internal
+    Mono<String> deleteAuthentication(Mono<AuthTransfer> authTransferMono);
     // requires jwt
     Mono<String> updatePassword(Mono<String> passwordMono, String authenticationId);
     // requires jwt
