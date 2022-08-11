@@ -46,8 +46,6 @@ public class Router {
                 handler::authenticate)
                 .andRoute(POST("/authentications").and(accept(MediaType.APPLICATION_JSON)),
                         handler::createAuthentication)
-                .andRoute(DELETE("/authentications").and(accept(MediaType.APPLICATION_JSON)),
-                        handler::deleteAuthentication)
                 .andRoute(PUT("/public/authentications/password").and(accept(MediaType.APPLICATION_JSON)),
                         handler::updatePassword)
                 .andRoute(PUT("/authentications/roleid").and(accept(MediaType.APPLICATION_JSON)),

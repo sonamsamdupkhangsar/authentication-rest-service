@@ -95,19 +95,6 @@ public class SimpleAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public Mono<String> deleteAuthentication(Mono<AuthTransfer> authTransferMono) {
-        LOG.info("delete authenticationId");
-        return authTransferMono
-                .flatMap(authTransfer -> {
-                    LOG.info("delete auth by authenticationId: {}", authTransfer.getAuthenticationId());
-                    authenticationRepository.deleteById(authTransfer.getAuthenticationId()).subscribe();
-                    return Mono.just(authTransfer);
-                })
-                .flatMap(authTransfer -> Mono.just("deleted Authentication with authId: "+ authTransfer.getAuthenticationId()));
-    }
-
-
-    @Override
     public Mono<String> updatePassword(Mono<String> passwordMono, String authenticationId) {
         return passwordMono.flatMap(password -> authenticationRepository.updatePassword(password, authenticationId))
                 .thenReturn("password updated");
