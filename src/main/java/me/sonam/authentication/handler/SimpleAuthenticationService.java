@@ -87,11 +87,30 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             LOG.info("create authentication");
                             return Mono.just(new Authentication(
                                     authTransfer.getAuthenticationId(), authTransfer.getPassword(), null, null,
-                                    null, true, LocalDateTime.now(), true));
+                                    null, false, LocalDateTime.now(), true));
                         })
                         .flatMap(authentication -> authenticationRepository.save(authentication))
                         .flatMap(authentication1 -> Mono.just("create Authentication success for authId: " + authentication1.getAuthenticationId())));
 
+    }
+
+    @Override
+    public Mono<String> deleteAuthentication(String authenticationId) {
+        LOG.info("delete auth by authenticationId: {}", authenticationId);
+
+        return authenticationRepository.existsByAuthenticationIdAndActiveTrue(authenticationId)
+                .filter(aBoolean -> !aBoolean)
+                .switchIfEmpty(Mono.error(new AuthenticationException("Authentication is active, failed to delete")))
+                .flatMap(aBoolean -> authenticationRepository.deleteById(authenticationId).thenReturn("deleted Authentication"))
+                .thenReturn("deleted Authentication with authId: "+authenticationId);
+    }
+
+    @Override
+    public Mono<String> activateAuthentication(String authenticationId) {
+        LOG.info("activate authentication");
+
+        return authenticationRepository.updateAuthenticationActiveTrue(authenticationId)
+                .thenReturn("activated: "+authenticationId);
     }
 
     @Override

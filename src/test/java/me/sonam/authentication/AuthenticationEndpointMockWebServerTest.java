@@ -8,6 +8,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,6 +64,11 @@ public class AuthenticationEndpointMockWebServerTest {
     @Autowired
     private WebTestClient webTestClient;
 
+    @AfterEach
+    public void cleanRepo() {
+        authenticationRepository.deleteAll().subscribe();
+    }
+
     @Before
     public void setUp() {
         LOG.info("setup mock");
@@ -97,7 +103,7 @@ public class AuthenticationEndpointMockWebServerTest {
     @Test
     public void createAuthenticationAuthAlreadyExists() {
         Authentication authentication = new Authentication("user2", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
-                UUID.randomUUID(), true, LocalDateTime.now(), true);
+                UUID.randomUUID(), false, LocalDateTime.now(), true);
 
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cause save"));
 
@@ -193,5 +199,77 @@ public class AuthenticationEndpointMockWebServerTest {
         assertThat(result.getResponseBody()).isEqualTo("no authentication found with username or password");
 
     }
+
+    @Test
+    public void createAuthenticationAndDelete() throws InterruptedException {
+        LOG.info("create authTransfer");
+        AuthTransfer authTransfer = new AuthTransfer("user4", "pass", apiKey);
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
+                .bodyValue(authTransfer)
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("create Authentication success for authId: user4");
+
+        LOG.info("call delete");
+        webTestClient.delete().uri("/authentications/"+authTransfer.getAuthenticationId())
+                .exchange().expectStatus().isOk()
+                .expectBody(String.class)
+                .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
+
+        LOG.info("jwt: {}", result.getResponseBody());
+    }
+
+    @Test
+    public void createActiveAuthenticationAndDelete() throws InterruptedException {
+        LOG.info("create authTransfer");
+        Authentication authentication = new Authentication("user3", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        LOG.info("call delete");
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/authentications/"+"user3")
+                .exchange().expectStatus().isBadRequest()
+                .expectBody(String.class)
+                .returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("Authentication is active, failed to delete");
+
+    }
+
+    @Test
+    public void setActive() throws InterruptedException {
+        Authentication authentication = new Authentication("user3", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), false, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        LOG.info("call activate");
+        EntityExchangeResult<String> result = webTestClient.put().uri("/authentications/activate/"+"user3")
+                .exchange().expectStatus().isOk()
+                .expectBody(String.class)
+                .returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("activated: user3");
+
+        authenticationRepository.findById("user3").subscribe(authentication1
+                -> LOG.info("is active true?: {}", authentication1.getActive()));
+    }
+
+    @Test
+    public void setActiveNotExisting() throws InterruptedException {
+        LOG.info("call activate");
+        EntityExchangeResult<String> result = webTestClient.put().uri("/authentications/activate/"+"user3")
+                .exchange().expectStatus().isOk()
+                .expectBody(String.class)
+                .returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("activated: user3");
+
+    }
+
 
 }
