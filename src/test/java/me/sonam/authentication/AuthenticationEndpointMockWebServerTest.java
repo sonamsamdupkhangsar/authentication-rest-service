@@ -104,7 +104,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         AuthTransfer authTransfer = new AuthTransfer("user2", "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -151,7 +151,7 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("create authTransfer");
         AuthTransfer authTransfer = new AuthTransfer("user4", "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 

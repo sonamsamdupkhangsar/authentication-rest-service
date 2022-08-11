@@ -50,7 +50,7 @@ public class AuthenticationRestTest {
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
 
         LOG.info("call authentication/password update");
-        webTestClient.put().uri("/authentications/password")
+        webTestClient.put().uri("/public/authentications/password")
                 .bodyValue("newPass")
                 .headers(httpHeaders -> httpHeaders.set("authId", "user3"))
                 .exchange().expectStatus().isOk()
