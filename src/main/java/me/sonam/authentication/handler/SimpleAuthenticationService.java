@@ -55,23 +55,34 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
     @Override
     public Mono<String> authenticate(Mono<AuthTransfer> authTransferMono) {
-        return authTransferMono
-                .flatMap(authTransfer -> authenticationRepository.findByAuthenticationIdAndPassword(
+        /**
+         *  .map(authentication -> !authentication.getActive())
+         *                 .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
+         */
+        return authTransferMono.flatMap(authTransfer ->
+                authenticationRepository.existsById(authTransfer.getAuthenticationId())
+                .filter(aBoolean -> aBoolean)
+                .switchIfEmpty(Mono.error(new AuthenticationException("authentication does not exist with authId")))
+                .flatMap(aBoolean -> authenticationRepository.existsByAuthenticationIdAndActiveTrue(authTransfer.getAuthenticationId()))
+                .doOnNext(aBoolean -> LOG.info("aboolean is {}", aBoolean))
+                .filter(aBoolean -> aBoolean)
+                .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
+                .flatMap(aBoolean -> authenticationRepository.findByAuthenticationIdAndPassword(
                         authTransfer.getAuthenticationId(), authTransfer.getPassword()))
-                .switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username or password")))
-                .flatMap(authentication ->
-                {
+                .switchIfEmpty(Mono.error(
+                        new AuthenticationException("no authentication found with username and password")))
+                .flatMap(authentication -> {
                     WebClient.ResponseSpec responseSpec = webClient.get().uri(
-                            jwtRestService.replace("{username}",authentication.getAuthenticationId())
+                            jwtRestService.replace("{username}", authentication.getAuthenticationId())
                                     .replace("{audience}", audience)
                                     .replace("{expireField}", expireField)
                                     .replace("{expireIn}", expireIn))
-                          .retrieve();
+                            .retrieve();
                     return responseSpec.bodyToMono(String.class).map(jwtToken -> {
                         LOG.info("got jwt token: {}", jwtToken);
                         return jwtToken;
                     });
-                });
+                }));
 
     }
 
@@ -79,7 +90,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
     public Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono) {
         LOG.info("Create authentication");
         return authTransferMono
-                .flatMap(authTransfer -> authenticationRepository.existsByAuthenticationId(authTransfer.getAuthenticationId())
+                .flatMap(authTransfer -> authenticationRepository.existsById(authTransfer.getAuthenticationId())
                         .doOnNext(aBoolean -> LOG.info("aBoolean is {}", aBoolean))
                         .filter(aBoolean -> !aBoolean)
                         .switchIfEmpty(Mono.error(new AuthenticationException("create Authentication failed, authenticationId is already used")))
@@ -92,17 +103,6 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         .flatMap(authentication -> authenticationRepository.save(authentication))
                         .flatMap(authentication1 -> Mono.just("create Authentication success for authId: " + authentication1.getAuthenticationId())));
 
-    }
-
-    @Override
-    public Mono<String> deleteAuthentication(String authenticationId) {
-        LOG.info("delete auth by authenticationId: {}", authenticationId);
-
-        return authenticationRepository.existsByAuthenticationIdAndActiveTrue(authenticationId)
-                .filter(aBoolean -> !aBoolean)
-                .switchIfEmpty(Mono.error(new AuthenticationException("Authentication is active, failed to delete")))
-                .flatMap(aBoolean -> authenticationRepository.deleteById(authenticationId).thenReturn("deleted Authentication"))
-                .thenReturn("deleted Authentication with authId: "+authenticationId);
     }
 
     @Override

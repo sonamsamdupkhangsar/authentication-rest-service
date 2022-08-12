@@ -40,16 +40,6 @@ public class AuthenticationHandler {
                                 .bodyValue(throwable.getMessage()));
     }
 
-    public Mono<ServerResponse> deleteAuthentication(ServerRequest serverRequest) {
-        LOG.info("create authentication");
-
-        return authenticationService.deleteAuthentication(serverRequest.pathVariable("authenticationId"))
-                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
-    }
-
     public Mono<ServerResponse> activateAuthentication(ServerRequest serverRequest) {
         LOG.info("create authentication");
         return authenticationService.activateAuthentication(serverRequest.pathVariable("authenticationId"))

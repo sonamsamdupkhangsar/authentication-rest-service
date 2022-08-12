@@ -131,12 +131,14 @@ public class AuthenticationEndpointMockWebServerTest {
 
 
         LOG.info("call authenticate rest endpoint in this application");
-        webTestClient.post().uri("/public/authentications/authenticate")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications/authenticate")
                 .bodyValue(new AuthTransfer("user3", "yakpass", apiKey))
                 .exchange().expectStatus().isOk()
-                .expectBody(String.class)
-                .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
+                .expectBody(String.class).returnResult();
 
+        assertThat(result.getResponseBody()).contains(".");
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isNotEmpty();
         LOG.info("start taking request now");
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
@@ -148,6 +150,28 @@ public class AuthenticationEndpointMockWebServerTest {
 
         assertThat(request.getPath()).startsWith("/create/");
     }
+
+    @Test
+    void authenticateActiveFalse() throws InterruptedException {
+        LOG.info("save a authentication object so that we have a valid user with the password");
+        Authentication authentication = new Authentication("user3", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), false, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+
+        LOG.info("call authenticate rest endpoint in this application");
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications/authenticate")
+                .bodyValue(new AuthTransfer("user3", "yakpass", apiKey))
+                .exchange().expectStatus().isBadRequest()
+                .expectBody(String.class).returnResult();
+                //.consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
+
+        assertThat(result.getResponseBody()).isEqualTo("Authentication not active, activate your acccount first");
+        LOG.info("start taking request now");
+    }
+
 
     /**
      * this will test both endpoints: create authentication and authenticate to create jwt
@@ -166,14 +190,17 @@ public class AuthenticationEndpointMockWebServerTest {
 
         final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
 
+        authenticationRepository.updateAuthenticationActiveTrue("user4").subscribe(integer -> LOG.info("set authentication to Active"));
+
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(jwt));
 
         LOG.info("call authenticate rest endpoint in this application");
-        webTestClient.post().uri("/public/authentications/authenticate")
+        result = webTestClient.post().uri("/public/authentications/authenticate")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isOk()
-                .expectBody(String.class)
-                .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
+                .expectBody(String.class).returnResult();
+
+        assertThat(result.getResponseBody()).isNotEmpty();
 
         LOG.info("start taking request now");
         RecordedRequest request = mockWebServer.takeRequest();
@@ -196,46 +223,7 @@ public class AuthenticationEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("no authentication found with username or password");
-
-    }
-
-    @Test
-    public void createAuthenticationAndDelete() throws InterruptedException {
-        LOG.info("create authTransfer");
-        AuthTransfer authTransfer = new AuthTransfer("user4", "pass", apiKey);
-
-        EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
-                .bodyValue(authTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
-
-        LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("create Authentication success for authId: user4");
-
-        LOG.info("call delete");
-        webTestClient.delete().uri("/authentications/"+authTransfer.getAuthenticationId())
-                .exchange().expectStatus().isOk()
-                .expectBody(String.class)
-                .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
-
-        LOG.info("jwt: {}", result.getResponseBody());
-    }
-
-    @Test
-    public void createActiveAuthenticationAndDelete() throws InterruptedException {
-        LOG.info("create authTransfer");
-        Authentication authentication = new Authentication("user3", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
-                UUID.randomUUID(), true, LocalDateTime.now(), true);
-        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
-
-        LOG.info("call delete");
-        EntityExchangeResult<String> result = webTestClient.delete().uri("/authentications/"+"user3")
-                .exchange().expectStatus().isBadRequest()
-                .expectBody(String.class)
-                .returnResult();
-
-        LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("Authentication is active, failed to delete");
+        assertThat(result.getResponseBody()).isEqualTo("authentication does not exist with authId");
 
     }
 
