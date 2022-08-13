@@ -17,7 +17,7 @@ public interface AuthenticationRepository extends ReactiveCrudRepository<Authent
     @Query("update authentication a set a.role_id= :roleId where a.authentication_Id= :authenticationId")
     Mono<Integer> updateRoleId(@Param("roleId") UUID roleId, @Param("authenticationId") String authenticationId);
 
-    @Query("update authentication a set a.active=true where a.authentication_Id= :authenticationId")
+    @Query("update authentication set active=true where authentication_Id= :authenticationId")
     Mono<Integer> updateAuthenticationActiveTrue(@Param("authenticationId") String authenticationId);
 
 }
