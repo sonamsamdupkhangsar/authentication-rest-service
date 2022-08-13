@@ -44,9 +44,10 @@ public class AuthenticationHandler {
         LOG.info("create authentication");
         return authenticationService.activateAuthentication(serverRequest.pathVariable("authenticationId"))
                 .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
+                .onErrorResume(throwable -> {
+                    LOG.error("error on activating authentication: {}", throwable);
+                        return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(throwable.getMessage());});
     }
 
     public Mono<ServerResponse> updatePassword(ServerRequest serverRequest) {
