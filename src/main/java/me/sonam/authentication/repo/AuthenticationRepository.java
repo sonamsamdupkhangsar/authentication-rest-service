@@ -10,6 +10,8 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 public interface AuthenticationRepository extends ReactiveCrudRepository<Authentication, String> {
+    Mono<Integer> deleteByAuthenticationIdAndActiveFalse(String authenticationId);
+    Mono<Boolean> existsByIdAndActiveTrue(String var1);
     Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String authenticationId);
     Mono<Authentication> findByAuthenticationIdAndPassword(String authenticationId, String password);
     @Query("update authentication a set a.password= :password where a.authentication_Id= :authenticationId")

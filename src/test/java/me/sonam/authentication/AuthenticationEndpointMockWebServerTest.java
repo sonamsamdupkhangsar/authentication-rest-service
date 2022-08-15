@@ -112,10 +112,10 @@ public class AuthenticationEndpointMockWebServerTest {
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
                 .bodyValue(authTransfer)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("create Authentication failed, authenticationId is already used");
+        assertThat(result.getResponseBody()).isEqualTo("create Authentication success for authId: user2");
     }
 
     @Test
@@ -183,7 +183,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
                 .bodyValue(authTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("create Authentication success for authId: user4");
