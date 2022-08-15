@@ -119,6 +119,24 @@ public class AuthenticationEndpointMockWebServerTest {
     }
 
     @Test
+    public void createAuthenticationWithActiveAlreadyExists() {
+        Authentication authentication = new Authentication("user2", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cause save"));
+
+
+        AuthTransfer authTransfer = new AuthTransfer("user2", "pass", apiKey);
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
+                .bodyValue(authTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("Authentication is already active with authenticationId");
+    }
+
+    @Test
     void authenticate() throws InterruptedException {
         LOG.info("save a authentication object so that we have a valid user with the password");
         Authentication authentication = new Authentication("user3", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
