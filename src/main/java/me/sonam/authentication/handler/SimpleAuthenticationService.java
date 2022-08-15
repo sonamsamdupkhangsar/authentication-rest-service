@@ -90,26 +90,24 @@ public class SimpleAuthenticationService implements AuthenticationService {
     public Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono) {
         LOG.info("Create authentication");
         return authTransferMono
-                .flatMap(authTransfer -> {
-                   return authenticationRepository.existsByAuthenticationIdAndActiveTrue(authTransfer.getAuthenticationId())
-                            .filter(aBoolean -> !aBoolean)
-                            .switchIfEmpty(Mono.error(new AuthenticationException("Authentication is already active with authenticationId")))
-                            .flatMap(aBoolean -> {
-                                LOG.info("delete by id where active is false");
-                                return authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authTransfer.getAuthenticationId());
-                            })
-                            .flatMap(integer -> {
-                                LOG.info("create authentication");
-                                return Mono.just(new Authentication(
-                                        authTransfer.getAuthenticationId(), authTransfer.getPassword(), null, null,
-                                        null, false, LocalDateTime.now(), true));
-                            })
-                            .flatMap(authentication -> authenticationRepository.save(authentication))
-                            .flatMap(authentication1 -> {
-                                LOG.info("created authentication1: {}", authentication1);
-                               return Mono.just("create Authentication success for authId: " + authentication1.getAuthenticationId());
-                            });
-                });
+                .flatMap(authTransfer -> authenticationRepository.existsByAuthenticationIdAndActiveTrue(authTransfer.getAuthenticationId())
+                         .filter(aBoolean -> !aBoolean)
+                         .switchIfEmpty(Mono.error(new AuthenticationException("Authentication is already active with authenticationId")))
+                         .flatMap(aBoolean -> {
+                             LOG.info("delete by id where active is false");
+                             return authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authTransfer.getAuthenticationId());
+                         })
+                         .flatMap(integer -> {
+                             LOG.info("create authentication");
+                             return Mono.just(new Authentication(
+                                     authTransfer.getAuthenticationId(), authTransfer.getPassword(), null, null,
+                                     null, false, LocalDateTime.now(), true));
+                         })
+                         .flatMap(authentication -> authenticationRepository.save(authentication))
+                         .flatMap(authentication1 -> {
+                             LOG.info("created authentication1: {}", authentication1);
+                            return Mono.just("create Authentication success for authId: " + authentication1.getAuthenticationId());
+                         }));
     }
 
     @Override
