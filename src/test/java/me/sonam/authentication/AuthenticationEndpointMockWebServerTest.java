@@ -112,10 +112,28 @@ public class AuthenticationEndpointMockWebServerTest {
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
                 .bodyValue(authTransfer)
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("create Authentication success for authId: user2");
+    }
+
+    @Test
+    public void createAuthenticationWithActiveAlreadyExists() {
+        Authentication authentication = new Authentication("user2", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cause save"));
+
+
+        AuthTransfer authTransfer = new AuthTransfer("user2", "pass", apiKey);
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
+                .bodyValue(authTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("create Authentication failed, authenticationId is already used");
+        assertThat(result.getResponseBody()).isEqualTo("Authentication is already active with authenticationId");
     }
 
     @Test
@@ -183,7 +201,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
                 .bodyValue(authTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("create Authentication success for authId: user4");

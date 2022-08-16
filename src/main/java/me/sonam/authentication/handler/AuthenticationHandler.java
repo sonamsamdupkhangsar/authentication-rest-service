@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.UUID;
 
 @Service
@@ -24,9 +25,11 @@ public class AuthenticationHandler {
 
         return authenticationService.authenticate(serverRequest.bodyToMono(AuthTransfer.class))
                 .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
+                .onErrorResume(throwable -> {
+                    LOG.error("authenticate failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
 
     }
 
@@ -34,10 +37,12 @@ public class AuthenticationHandler {
         LOG.info("create authentication");
 
         return authenticationService.createAuthentication(serverRequest.bodyToMono(AuthTransfer.class))
-                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
+                .flatMap(s -> ServerResponse.created(URI.create("/authentications")).contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("create authentication failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
     }
 
     public Mono<ServerResponse> activateAuthentication(ServerRequest serverRequest) {
@@ -45,7 +50,7 @@ public class AuthenticationHandler {
         return authenticationService.activateAuthentication(serverRequest.pathVariable("authenticationId"))
                 .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
-                    LOG.error("error on activating authentication: {}", throwable);
+                    LOG.error("error on activating authentication", throwable);
                         return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(throwable.getMessage());});
     }
@@ -55,9 +60,11 @@ public class AuthenticationHandler {
         return authenticationService.updatePassword(serverRequest.bodyToMono(String.class),
                 serverRequest.headers().firstHeader("authId"))
                 .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
+                .onErrorResume(throwable -> {
+                    LOG.error("update password failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
     }
 
     public Mono<ServerResponse> updateRoleId(ServerRequest serverRequest) {
@@ -65,8 +72,10 @@ public class AuthenticationHandler {
         return authenticationService.updateRoleId(serverRequest.bodyToMono(String.class),
                 serverRequest.headers().firstHeader("authId"))
                 .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
+                .onErrorResume(throwable -> {
+                    LOG.error("update role id failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
     }
 }
