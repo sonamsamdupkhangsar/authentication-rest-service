@@ -51,6 +51,8 @@ public class Router {
                 .andRoute(PUT("/public/authentications/password").and(accept(MediaType.APPLICATION_JSON)),
                         handler::updatePassword)
                 .andRoute(PUT("/authentications/roleid").and(accept(MediaType.APPLICATION_JSON)),
-                        handler::updateRoleId);
+                        handler::updateRoleId)
+                .andRoute(DELETE("/authentications/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::delete);
     }
 }

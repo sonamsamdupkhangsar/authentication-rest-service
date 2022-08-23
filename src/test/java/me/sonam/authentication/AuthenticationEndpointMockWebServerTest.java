@@ -278,4 +278,43 @@ public class AuthenticationEndpointMockWebServerTest {
     }
 
 
+    @Test
+    void deleteWhenActiveFalse() throws InterruptedException {
+        LOG.info("save a authentication object so that we have a valid user with the password");
+        final String authId = "deleteWhenActiveFalse";
+
+        Authentication authentication = new Authentication(authId, "yakpass",
+                UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), false, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        LOG.info("call delete rest endpoint in this application");
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/authentications/"+authId)
+                .exchange().expectStatus().isOk()
+                .expectBody(String.class).returnResult();
+
+        assertThat(result.getResponseBody()).isEqualTo("deleted: "+authId);
+        authenticationRepository.existsById(authId).subscribe(aBoolean ->
+                LOG.info("exists should be false: {}", aBoolean));
+    }
+
+    @Test
+    void deleteWhenActiveTrue() throws InterruptedException {
+        LOG.info("save a authentication object so that we have a valid user with the password");
+        final String authId = "deleteWhenActiveTrue";
+
+        Authentication authentication = new Authentication(authId, "yakpass",
+                UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        LOG.info("call delete rest endpoint in this application");
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/authentications/"+authId)
+                .exchange().expectStatus().isBadRequest()
+                .expectBody(String.class).returnResult();
+
+        assertThat(result.getResponseBody()).isEqualTo("authentication is active, cannot delete");
+        authenticationRepository.existsById(authId).subscribe(aBoolean ->
+                LOG.info("exists should be true: {}", aBoolean));
+    }
 }

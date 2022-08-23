@@ -78,4 +78,16 @@ public class AuthenticationHandler {
                             .bodyValue(throwable.getMessage());
                 });
     }
+
+    public Mono<ServerResponse> delete(ServerRequest serverRequest) {
+        LOG.info("delete user");
+
+        return authenticationService.delete(serverRequest.pathVariable("authenticationId"))
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("delete authentication failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
+    }
 }

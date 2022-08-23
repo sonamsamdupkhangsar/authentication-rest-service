@@ -130,4 +130,15 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .thenReturn("password updated");
     }
 
+    @Override
+    public Mono<String> delete(String authenticationId) {
+        LOG.info("delete authentication by authenticationId");
+
+        return authenticationRepository.findById(authenticationId)
+                .filter(authentication -> !authentication.getActive())
+                .switchIfEmpty(Mono.error(new AuthenticationException("authentication is active, cannot delete")))
+                .flatMap(authentication ->   authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
+                .thenReturn("deleted: " + authenticationId);
+    }
+
 }
