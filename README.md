@@ -11,9 +11,9 @@ flowchart TD
     authentication-rest-service --> authenticationIdExists{Does authenticationId already exists?}
     authenticationIdExists --> |Yes| Error[Throw Error]
     authenticationIdExists --> |No| CheckAuthIdExistAndFalse[Delete by authenticationId that is active false]
-    CheckAuthIdExistAndFalse -->|Delete existing row that matches authenticationId and active is false|db[(authentication postgresqldb)]       
-    CheckAuthIdExistAndFalse --> |Save Authentication| Save[Save Authentication]
-    Save --> db            
+    CheckAuthIdExistAndFalse -->|Delete existing row that matches authenticationId and active is false|db[(authentication postgresqldb)]
+    db -->Create[Create Authentication]       
+    Create --> |Create Authentication| db
 ```
 
 ## Run locally
