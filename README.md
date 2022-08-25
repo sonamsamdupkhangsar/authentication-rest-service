@@ -25,7 +25,8 @@ The following is the workflow for authentication which will return a JWT token:
 ```mermaid
 flowchart TD
     user-request[user-request] -->|authentication| authentication-rest-service[authentication-rest-service]
-    authentication-rest-service --> authenticationIdExists{Does authenticationId already exists?}
+    authentication-rest-service --> authenticationIdExists{Does authenticationId exists?}
+    authenticationIdExists --> db[(authentication postgresqldb)]
     authenticationIdExists --> |No| Error[Throw Error]
     authenticationIdExists --> |Yes| CheckAuthIdExistAndIsActiveTrue{is AuthenticationId active True}
     CheckAuthIdExistAndIsActiveTrue -->|No| AuthNotActive[Authentication not active error]
