@@ -4,6 +4,15 @@ This is the Authentication rest service.  It is used internally by the
 user-rest-service during user-signup and also can be used for authentication
 using username/password and api-key to generate a JWT.
 
+
+```mermaid
+flowchart TD
+    user-request[user-request] -->|create authentication| authentication-rest-service[authentication-rest-service]
+    authentication-rest-service -->|throw error if authenticationId already exists| db[(authentication postgresqldb)]
+    authentication-rest-service -->|delete authentication record if authenticationId already exists and active is false| db    
+    authentication-rest-service -->|save authentication data| db        
+```
+
 ## Run locally
 
 ```
