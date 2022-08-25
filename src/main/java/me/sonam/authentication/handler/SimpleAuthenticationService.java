@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -42,6 +43,9 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Value("${apiKey}")
     private String apiKey;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private WebClient webClient;
 
     @Autowired
@@ -67,13 +71,15 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .doOnNext(aBoolean -> LOG.info("aboolean is {}", aBoolean))
                 .filter(aBoolean -> aBoolean)
                 .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
-                .flatMap(aBoolean -> authenticationRepository.findByAuthenticationIdAndPassword(
-                        authTransfer.getAuthenticationId(), authTransfer.getPassword()))
+                 .flatMap(aBoolean -> authenticationRepository.findById(authTransfer.getAuthenticationId()))
+                 .map(authentication -> passwordEncoder.matches(authTransfer.getPassword(), authentication.getPassword()))
+                        .doOnNext(aBoolean -> LOG.info("password matched?: {}", aBoolean))
+                        .filter(aBoolean -> aBoolean)
                 .switchIfEmpty(Mono.error(
                         new AuthenticationException("no authentication found with username and password")))
-                .flatMap(authentication -> {
+                .flatMap(aBoolean -> {
                     WebClient.ResponseSpec responseSpec = webClient.get().uri(
-                            jwtRestService.replace("{username}", authentication.getAuthenticationId())
+                            jwtRestService.replace("{username}", authTransfer.getAuthenticationId())
                                     .replace("{audience}", audience)
                                     .replace("{expireField}", expireField)
                                     .replace("{expireIn}", expireIn))
@@ -100,7 +106,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                          .flatMap(integer -> {
                              LOG.info("create authentication");
                              return Mono.just(new Authentication(
-                                     authTransfer.getAuthenticationId(), authTransfer.getPassword(), null, null,
+                                     authTransfer.getAuthenticationId(), passwordEncoder.encode(authTransfer.getPassword()), null, null,
                                      null, false, LocalDateTime.now(), true));
                          })
                          .flatMap(authentication -> authenticationRepository.save(authentication))
@@ -128,6 +134,17 @@ public class SimpleAuthenticationService implements AuthenticationService {
     public Mono<String> updateRoleId(Mono<String> uuidStringMono, String authenticationId) {
         return uuidStringMono.flatMap(roleId -> authenticationRepository.updateRoleId(UUID.fromString(roleId), authenticationId))
                 .thenReturn("password updated");
+    }
+
+    @Override
+    public Mono<String> delete(String authenticationId) {
+        LOG.info("delete authentication by authenticationId");
+
+        return authenticationRepository.findById(authenticationId)
+                .filter(authentication -> !authentication.getActive())
+                .switchIfEmpty(Mono.error(new AuthenticationException("authentication is active, cannot delete")))
+                .flatMap(authentication ->   authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
+                .thenReturn("deleted: " + authenticationId);
     }
 
 }

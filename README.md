@@ -1,8 +1,45 @@
 # authentication-rest-service
 
 This is the Authentication rest service.  It is used internally by the 
-user-rest-service during user-signup and also can be used for authentication
+user-rest-service during user signup and also used for authentication
 using username/password and api-key to generate a JWT.
+
+
+## Workflow for Creation
+The following is the workflow for authentication creation:
+
+
+```mermaid
+flowchart TD
+    user-rest-service[user-rest-service] -->|create authentication| authentication-rest-service[authentication-rest-service]
+    authentication-rest-service --> authenticationIdExists{Does authenticationId already exists?}
+    authenticationIdExists --> |Yes| Error[Throw Error]
+    authenticationIdExists --> |No| CheckAuthIdExistAndFalse[Delete by authenticationId that is active false]
+    CheckAuthIdExistAndFalse -->|Delete existing row that matches authenticationId and active is false|db[(authentication postgresqldb)]
+    db -->Create[Create Authentication]       
+    Create --> |Create Authentication| db
+```
+
+## Workflow for Authentication
+
+The following is the workflow for authentication which will return a JWT token:
+
+```mermaid
+flowchart TD
+    user[user] -->|authenticate| authentication-rest-service[authentication-rest-service]
+    authentication-rest-service --> authenticationIdExists{Does authenticationId exists?}
+    authenticationIdExists -->|query database| db[(authentication postgresqldb)]
+    authenticationIdExists --> |No| Error[Throw Error]
+    authenticationIdExists --> |Yes| CheckAuthIdExistAndIsActiveTrue{is authenticationId active True}
+    CheckAuthIdExistAndIsActiveTrue -->|query database| db
+    CheckAuthIdExistAndIsActiveTrue -->|No| AuthNotActive[Authentication not active error]
+    CheckAuthIdExistAndIsActiveTrue -->|Yes| CheckUserPasswordMatch{Does user password match?}
+    CheckUserPasswordMatch -->|query database| db
+    CheckUserPasswordMatch -->|No| UserPasswordNotMatchError[Error user password not match]
+    CheckUserPasswordMatch -->|Yes| CallJwtRestService[jwt rest service callout]
+    CallJwtRestService -->|jwt| JWT[jwt token]
+    JWT --> user
+```
 
 ## Run locally
 
