@@ -32,9 +32,11 @@ flowchart TD
     CheckAuthIdExistAndIsActiveTrue -->|query database| db
     CheckAuthIdExistAndIsActiveTrue -->|No| AuthNotActive[Authentication not active error]
     CheckAuthIdExistAndIsActiveTrue -->|Yes| CheckUserPasswordMatch{Does user password match?}
+    CheckUserPasswordMatch -->|query database| db
     CheckUserPasswordMatch -->|No| UserPasswordNotMatchError[Error user password not match]
-    CheckUserPasswordMatch -->|Yes| CallJwtRestService[jwt rest service to generate jwt token]
+    CheckUserPasswordMatch -->|Yes| CallJwtRestService[jwt rest service callout]
     CallJwtRestService -->|jwt| JWT[jwt token]
+    JWT --> user-request
 ```
 
 ## Run locally
