@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
 public class Application {
@@ -29,5 +30,10 @@ public class Application {
         return initializer;
     }
 
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        LOG.info("creating bcrypt password encoder");
+        return new BCryptPasswordEncoder();
+    }
 
 }

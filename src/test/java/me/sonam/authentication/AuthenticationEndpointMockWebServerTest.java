@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -60,6 +61,9 @@ public class AuthenticationEndpointMockWebServerTest {
 
     @Autowired
     private AuthenticationRepository authenticationRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -139,7 +143,7 @@ public class AuthenticationEndpointMockWebServerTest {
     @Test
     void authenticate() throws InterruptedException {
         LOG.info("save a authentication object so that we have a valid user with the password");
-        Authentication authentication = new Authentication("user3", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+        Authentication authentication = new Authentication("user3", passwordEncoder.encode("yakpass"), UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(), true, LocalDateTime.now(), true);
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
 
@@ -168,6 +172,25 @@ public class AuthenticationEndpointMockWebServerTest {
 
         assertThat(request.getPath()).startsWith("/create/");
     }
+
+
+    @Test
+    void authenticateBadPassword() throws InterruptedException {
+        LOG.info("save a authentication object so that we have a valid user with the password");
+        Authentication authentication = new Authentication("user3", passwordEncoder.encode("yakpass"), UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        LOG.info("call authenticate rest endpoint in this application");
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications/authenticate")
+                .bodyValue(new AuthTransfer("user3", "yakpass2", apiKey))
+                .exchange().expectStatus().isBadRequest()
+                .expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("no authentication found with username and password");
+    }
+
 
     @Test
     void authenticateActiveFalse() throws InterruptedException {
