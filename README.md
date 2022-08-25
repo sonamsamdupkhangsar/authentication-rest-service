@@ -24,7 +24,7 @@ The following is the workflow for authentication which will return a JWT token:
 
 ```mermaid
 flowchart TD
-    user-request[user-request] -->|authentication| authentication-rest-service[authentication-rest-service]
+    user[user] -->|authenticate| authentication-rest-service[authentication-rest-service]
     authentication-rest-service --> authenticationIdExists{Does authenticationId exists?}
     authenticationIdExists -->|query database| db[(authentication postgresqldb)]
     authenticationIdExists --> |No| Error[Throw Error]
@@ -36,7 +36,7 @@ flowchart TD
     CheckUserPasswordMatch -->|No| UserPasswordNotMatchError[Error user password not match]
     CheckUserPasswordMatch -->|Yes| CallJwtRestService[jwt rest service callout]
     CallJwtRestService -->|jwt| JWT[jwt token]
-    JWT --> user-request
+    JWT --> user
 ```
 
 ## Run locally
