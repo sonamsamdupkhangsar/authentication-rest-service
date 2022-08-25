@@ -5,7 +5,7 @@ user-rest-service during user signup and also used for authentication
 using username/password and api-key to generate a JWT.
 
 
-## Workflow
+## Workflow for Creation
 The following is the workflow for authentication creation:
 
 
@@ -19,6 +19,8 @@ flowchart TD
     db -->Create[Create Authentication]       
     Create --> |Create Authentication| db
 ```
+
+## Workflow for Authentication
 
 The following is the workflow for authentication which will return a JWT token:
 
