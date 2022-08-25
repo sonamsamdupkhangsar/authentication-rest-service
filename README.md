@@ -1,19 +1,38 @@
 # authentication-rest-service
 
 This is the Authentication rest service.  It is used internally by the 
-user-rest-service during user-signup and also can be used for authentication
+user-rest-service during user signup and also used for authentication
 using username/password and api-key to generate a JWT.
 
+
 ## Workflow
+The following is the workflow for authentication creation:
+
+
 ```mermaid
 flowchart TD
-    user-request[user-request] -->|create authentication| authentication-rest-service[authentication-rest-service]
+    user-rest-service[user-rest-service] -->|create authentication| authentication-rest-service[authentication-rest-service]
     authentication-rest-service --> authenticationIdExists{Does authenticationId already exists?}
     authenticationIdExists --> |Yes| Error[Throw Error]
     authenticationIdExists --> |No| CheckAuthIdExistAndFalse[Delete by authenticationId that is active false]
     CheckAuthIdExistAndFalse -->|Delete existing row that matches authenticationId and active is false|db[(authentication postgresqldb)]
     db -->Create[Create Authentication]       
     Create --> |Create Authentication| db
+```
+
+The following is the workflow for authentication which will return a JWT token:
+
+```mermaid
+flowchart TD
+    user-request[user-request] -->|authentication| authentication-rest-service[authentication-rest-service]
+    authentication-rest-service --> authenticationIdExists{Does authenticationId already exists?}
+    authenticationIdExists --> |No| Error[Throw Error]
+    authenticationIdExists --> |Yes| CheckAuthIdExistAndIsActiveTrue{is AuthenticationId active True}
+    CheckAuthIdExistAndIsActiveTrue -->|No| AuthNotActive[Authentication not active error]
+    CheckAuthIdExistAndIsActiveTrue -->|Yes| CheckUserPasswordMatch{Does user password match?}
+    CheckUserPasswordMatch -->|No| UserPasswordNotMatchError[Error user password not match]
+    CheckUserPasswordMatch -->|Yes| CallJwtRestService[call jwt-rest-service to generate jwt token]
+    CallJwtRestService -->|jwt| JWT[jwt token]
 ```
 
 ## Run locally
