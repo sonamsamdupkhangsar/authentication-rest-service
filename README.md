@@ -8,7 +8,7 @@ using username/password and api-key to generate a JWT.
 ```mermaid
 flowchart TD
     user-request[user-request] -->|create authentication| authentication-rest-service[authentication-rest-service]
-    authentication-rest-service --> authenticationIdExists { Does authenticationId already exists? }
+    authentication-rest-service --> authenticationIdExists {Does authenticationId already exists?}
     authenticationIdExists --> |Yes| Error[Throw Error]
     authenticationIdExists --> |No| CheckAuthIdExistAndFalse[Delete by authenticationId that is active false]
     CheckAuthIdExistAndFalse -->| Delete existing row that matches authenticationId and active is false|  db[(authentication postgresqldb)]       
