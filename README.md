@@ -26,9 +26,10 @@ The following is the workflow for authentication which will return a JWT token:
 flowchart TD
     user-request[user-request] -->|authentication| authentication-rest-service[authentication-rest-service]
     authentication-rest-service --> authenticationIdExists{Does authenticationId exists?}
-    authenticationIdExists --> db[(authentication postgresqldb)]
+    authenticationIdExists -->|query database| db[(authentication postgresqldb)]
     authenticationIdExists --> |No| Error[Throw Error]
-    authenticationIdExists --> |Yes| CheckAuthIdExistAndIsActiveTrue{is AuthenticationId active True}
+    authenticationIdExists --> |Yes| CheckAuthIdExistAndIsActiveTrue{is authenticationId active True}
+    CheckAuthIdExistAndIsActiveTrue -->|query database| db
     CheckAuthIdExistAndIsActiveTrue -->|No| AuthNotActive[Authentication not active error]
     CheckAuthIdExistAndIsActiveTrue -->|Yes| CheckUserPasswordMatch{Does user password match?}
     CheckUserPasswordMatch -->|No| UserPasswordNotMatchError[Error user password not match]
