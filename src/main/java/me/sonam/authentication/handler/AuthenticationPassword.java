@@ -5,18 +5,16 @@ import java.util.UUID;
 /**
  * this is for parsing the data from serverrequest body to this object
  */
-public class AuthTransfer {
+public class AuthenticationPassword {
     private String authenticationId;
     private String password;
-    private String apiKey;
-    private UUID clientId;
-    public AuthTransfer() {
+
+    public AuthenticationPassword() {
 
     }
-    public AuthTransfer(String authenticationId, String password, UUID clientId) {
+    public AuthenticationPassword(String authenticationId, String password) {
         this.authenticationId = authenticationId;
         this.password = password;
-        this.clientId = clientId;
     }
 
     public String getAuthenticationId() {
@@ -35,7 +33,4 @@ public class AuthTransfer {
         this.password = password;
     }
 
-    public void setClientId(UUID clientId) {
-        this.clientId = clientId;
-    }
 }

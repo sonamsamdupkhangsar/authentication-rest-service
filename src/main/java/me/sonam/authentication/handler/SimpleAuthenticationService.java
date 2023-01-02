@@ -13,7 +13,6 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,6 +26,9 @@ public class SimpleAuthenticationService implements AuthenticationService {
      * @param userMono contains the User object with username/password
      * @return
      */
+
+    @Value("${application-rest-service.root}${application-rest-service.client-role}")
+    private String applicationClientRoleService;
 
     @Value("${jwt-rest-service}")
     private String jwtRestService;
@@ -72,12 +74,26 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .filter(aBoolean -> aBoolean)
                 .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
                  .flatMap(aBoolean -> authenticationRepository.findById(authTransfer.getAuthenticationId()))
-                 .map(authentication -> passwordEncoder.matches(authTransfer.getPassword(), authentication.getPassword()))
-                        .doOnNext(aBoolean -> LOG.info("password matched?: {}", aBoolean))
-                        .filter(aBoolean -> aBoolean)
-                .switchIfEmpty(Mono.error(
-                        new AuthenticationException("no authentication found with username and password")))
-                .flatMap(aBoolean -> {
+
+                 .flatMap( authentication -> {
+                     if (passwordEncoder.matches(authTransfer.getPassword(), authentication.getPassword())) {
+                         return Mono.just(authentication);
+                     }
+                     else {
+                         return Mono.error(
+                                 new AuthenticationException("no authentication found with username and password"));
+                     }
+                 }).flatMap(authentication -> {
+                    WebClient.ResponseSpec responseSpec = webClient.get().uri(
+                            applicationClientRoleService.replace("{clientId}", "clientId")
+                                    .replace("{userId}", authentication.getUserId().toString()))
+                            .retrieve();
+                    return responseSpec.bodyToMono(String.class).map(role -> {
+                        LOG.info("got role: {}", role);
+                        return role;
+                    });
+                })
+                .flatMap(clientUserRole -> {
                     WebClient.ResponseSpec responseSpec = webClient.get().uri(
                             jwtRestService.replace("{username}", authTransfer.getAuthenticationId())
                                     .replace("{audience}", audience)
@@ -89,24 +105,23 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         return jwtToken;
                     });
                 }));
-
     }
 
     @Override
-    public Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono) {
+    public Mono<String> createAuthentication(Mono<AuthenticationPassword> authenticationPasswordMono) {
         LOG.info("Create authentication");
-        return authTransferMono
-                .flatMap(authTransfer -> authenticationRepository.existsByAuthenticationIdAndActiveTrue(authTransfer.getAuthenticationId())
+        return authenticationPasswordMono
+                .flatMap(authenticationPassword -> authenticationRepository.existsByAuthenticationIdAndActiveTrue(authenticationPassword.getAuthenticationId())
                          .filter(aBoolean -> !aBoolean)
                          .switchIfEmpty(Mono.error(new AuthenticationException("Authentication is already active with authenticationId")))
                          .flatMap(aBoolean -> {
                              LOG.info("delete by id where active is false");
-                             return authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authTransfer.getAuthenticationId());
+                             return authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authenticationPassword.getAuthenticationId());
                          })
                          .flatMap(integer -> {
                              LOG.info("create authentication");
                              return Mono.just(new Authentication(
-                                     authTransfer.getAuthenticationId(), passwordEncoder.encode(authTransfer.getPassword()), null, null,
+                                     authenticationPassword.getAuthenticationId(), passwordEncoder.encode(authenticationPassword.getPassword()), null, null,
                                      null, false, LocalDateTime.now(), true));
                          })
                          .flatMap(authentication -> authenticationRepository.save(authentication))

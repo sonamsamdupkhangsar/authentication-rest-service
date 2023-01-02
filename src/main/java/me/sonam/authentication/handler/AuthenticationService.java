@@ -13,7 +13,7 @@ public interface AuthenticationService {
     // no jwt required
     Mono<String> authenticate(Mono<AuthTransfer> authTransferMono);
     // no jwt required
-    Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono);
+    Mono<String> createAuthentication(Mono<AuthenticationPassword> authTransferMono);
     // internal
     Mono<String> activateAuthentication(String authenticationId);
     // requires jwt

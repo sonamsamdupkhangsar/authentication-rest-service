@@ -18,6 +18,8 @@ import org.springframework.web.reactive.function.server.*;
 import org.springframework.web.reactive.function.server.support.ServerRequestWrapper;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -60,7 +62,7 @@ public class AuthenticationMockRestServiceTest {
 
         LOG.info("authenticate");
         webTestClient.post().uri("/public/authentications/authenticate")
-                .bodyValue(new AuthTransfer("yakuser", "pass", "apikey"))
+                .bodyValue(new AuthTransfer("yakuser", "pass", UUID.randomUUID()))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)
                 .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));

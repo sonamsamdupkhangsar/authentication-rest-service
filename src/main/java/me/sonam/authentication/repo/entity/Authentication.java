@@ -16,7 +16,6 @@ public class Authentication implements Persistable<String> {
     private String authenticationId;
     private String password;
     private UUID userId;
-    private UUID roleId;
     private UUID signinSourceId;
     private Boolean active;
     private LocalDateTime accessDateTime;
@@ -27,12 +26,11 @@ public class Authentication implements Persistable<String> {
     public Authentication() {
     }
 
-    public Authentication(String authenticationId, String password, UUID userId, UUID roleId,
+    public Authentication(String authenticationId, String password, UUID userId,
                           UUID signinSourceId, Boolean active, LocalDateTime accessDateTime, boolean isNew) {
         this.authenticationId = authenticationId;
         this.password = password;
         this.userId = userId;
-        this.roleId = roleId;
         this.signinSourceId = signinSourceId;
         this.active = active;
         this.accessDateTime = accessDateTime;
@@ -73,14 +71,6 @@ public class Authentication implements Persistable<String> {
         this.userId = userId;
     }
 
-    public UUID getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(UUID roleId) {
-        this.roleId = roleId;
-    }
-
     public UUID getSigninSourceId() {
         return signinSourceId;
     }
@@ -115,7 +105,6 @@ public class Authentication implements Persistable<String> {
                 "authenticationId='" + authenticationId + '\'' +
                 ", password='" + password + '\'' +
                 ", userId=" + userId +
-                ", roleId=" + roleId +
                 ", signinSourceId=" + signinSourceId +
                 ", active=" + active +
                 ", accessDateTime=" + accessDateTime +

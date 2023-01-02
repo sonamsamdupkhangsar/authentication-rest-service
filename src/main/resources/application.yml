@@ -25,6 +25,10 @@ spring:
     properties:
       sslMode: REQUIRE
 
+application-rest-service:
+  root: http://application-rest-service-mychart.backend.svc.cluster.local:80/applications
+  client-role: /clients/{clientId}/users/{userId}
+
 jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/create/{username}/{audience}/{expireField}/{expireIn}
 audience: sonam.cloud
 expireField: 10 # Hours Per Calendar Api

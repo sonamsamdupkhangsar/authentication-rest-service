@@ -2,6 +2,7 @@ package me.sonam.authentication;
 
 import me.sonam.authentication.handler.AuthTransfer;
 import me.sonam.authentication.handler.AuthenticationHandler;
+import me.sonam.authentication.handler.AuthenticationPassword;
 import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
 import okhttp3.mockwebserver.MockResponse;
@@ -20,7 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -30,12 +35,17 @@ import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 /**
  * This will test the Authentication endpoints
@@ -67,6 +77,9 @@ public class AuthenticationEndpointMockWebServerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    ReactiveJwtDecoder jwtDecoder;
 
     @AfterEach
     public void cleanRepo() {
@@ -112,10 +125,10 @@ public class AuthenticationEndpointMockWebServerTest {
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cause save"));
 
 
-        AuthTransfer authTransfer = new AuthTransfer("user2", "pass", apiKey);
+        AuthenticationPassword authenticationPassword = new AuthenticationPassword("user2", "pass");
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
-                .bodyValue(authTransfer)
+                .bodyValue(authenticationPassword)
                 .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
@@ -130,10 +143,10 @@ public class AuthenticationEndpointMockWebServerTest {
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cause save"));
 
 
-        AuthTransfer authTransfer = new AuthTransfer("user2", "pass", apiKey);
+        AuthenticationPassword authenticationPassword = new AuthenticationPassword("user2", "pass");
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
-                .bodyValue(authTransfer)
+                .bodyValue(authenticationPassword)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
@@ -154,7 +167,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         LOG.info("call authenticate rest endpoint in this application");
         EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications/authenticate")
-                .bodyValue(new AuthTransfer("user3", "yakpass", apiKey))
+                .bodyValue(new AuthTransfer("user3", "yakpass", UUID.randomUUID()))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class).returnResult();
 
@@ -183,7 +196,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         LOG.info("call authenticate rest endpoint in this application");
         EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications/authenticate")
-                .bodyValue(new AuthTransfer("user3", "yakpass2", apiKey))
+                .bodyValue(new AuthTransfer("user3", "yakpass2", UUID.randomUUID()))
                 .exchange().expectStatus().isBadRequest()
                 .expectBody(String.class).returnResult();
 
@@ -204,7 +217,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         LOG.info("call authenticate rest endpoint in this application");
         EntityExchangeResult<String> result = webTestClient.post().uri("/public/authentications/authenticate")
-                .bodyValue(new AuthTransfer("user3", "yakpass", apiKey))
+                .bodyValue(new AuthTransfer("user3", "yakpass", UUID.randomUUID()))
                 .exchange().expectStatus().isBadRequest()
                 .expectBody(String.class).returnResult();
                 //.consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
@@ -220,7 +233,7 @@ public class AuthenticationEndpointMockWebServerTest {
     @Test
     public void createAuthenticationAndAuthenticate() throws InterruptedException {
         LOG.info("create authTransfer");
-        AuthTransfer authTransfer = new AuthTransfer("user4", "pass", apiKey);
+        AuthTransfer authTransfer = new AuthTransfer("user4", "pass", UUID.randomUUID());
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/authentications")
                 .bodyValue(authTransfer)
@@ -270,12 +283,22 @@ public class AuthenticationEndpointMockWebServerTest {
 
     @Test
     public void setActive() throws InterruptedException {
+        final String authenticationId = "adminAuth";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        Authentication adminAuth = new Authentication(authenticationId, "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), false, LocalDateTime.now(), true);
+        authenticationRepository.save(adminAuth).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+
         Authentication authentication = new Authentication("user3", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(), false, LocalDateTime.now(), true);
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
 
         LOG.info("call activate");
         EntityExchangeResult<String> result = webTestClient.put().uri("/authentications/activate/"+"user3")
+                .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)
                 .returnResult();
@@ -290,7 +313,17 @@ public class AuthenticationEndpointMockWebServerTest {
     @Test
     public void setActiveNotExisting() throws InterruptedException {
         LOG.info("call activate");
+        final String authenticationId = "adminAuth";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        Authentication adminAuth = new Authentication(authenticationId, "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), false, LocalDateTime.now(), true);
+        authenticationRepository.save(adminAuth).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        //activate endpoint is called by account-rest-service, so account-rest-service will use its own jwt
         EntityExchangeResult<String> result = webTestClient.put().uri("/authentications/activate/"+"user3")
+                .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)
                 .returnResult();
@@ -306,13 +339,18 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("save a authentication object so that we have a valid user with the password");
         final String authId = "deleteWhenActiveFalse";
 
+        Jwt jwt = jwt(authId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
         Authentication authentication = new Authentication(authId, "yakpass",
                 UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(), false, LocalDateTime.now(), true);
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
 
+        //allow self to delete as well
         LOG.info("call delete rest endpoint in this application");
         EntityExchangeResult<String> result = webTestClient.delete().uri("/authentications/"+authId)
+                .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class).returnResult();
 
@@ -339,5 +377,14 @@ public class AuthenticationEndpointMockWebServerTest {
         assertThat(result.getResponseBody()).isEqualTo("authentication is active, cannot delete");
         authenticationRepository.existsById(authId).subscribe(aBoolean ->
                 LOG.info("exists should be true: {}", aBoolean));
+    }
+
+    private Jwt jwt(String subjectName) {
+        return new Jwt("token", null, null,
+                Map.of("alg", "none"), Map.of("sub", subjectName));
+    }
+
+    private Consumer<HttpHeaders> addJwt(Jwt jwt) {
+        return headers -> headers.setBearerAuth(jwt.getTokenValue());
     }
 }

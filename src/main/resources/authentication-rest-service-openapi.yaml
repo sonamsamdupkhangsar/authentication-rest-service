@@ -1,0 +1,167 @@
+openapi: "3.0.2"
+info:
+  title: Authentication Api, authentication-rest-service.
+  version: "1.0"
+servers:
+  - url: https://api.server.test/v1
+
+security:
+  - bearerAuth: []
+
+paths:
+  /authentications:
+    post:
+      description: Create a new authentication.  This api is called when a new user is signed up.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationPassword'
+      responses:
+        '201':
+          description: Successfully created authentication
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Failed to create authentication
+          content:
+            text/plain:
+              schema:
+                type: string
+    delete:
+      description: Delete authentication associated with the JWT
+      responses:
+        '200':
+          description: Deleted authentication for the user in the JWT
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Failed to delete authentication
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /authentications/authenticate:
+    post:
+      description: Authenticate user with authenticationId and password.  This will get client role service in the jwt token.  This will return the jwt.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAuthTransfer'
+      responses:
+        '200':
+          description: User authenticated successfully
+          content:
+             text/plain:
+               schema:
+                 type: string
+        '400':
+          description: Failed to authenticate user
+          content:
+            text/plain:
+              schema:
+                type: string
+  /authentications/activate/{authenticationId}:
+    put:
+      description: Set authentication active status to true.  This service will be called from account-rest-service/activate/{authenticationId}
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully activated authenticationId.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Failed to activate authenticationId.
+          content:
+            text/plain:
+              schema:
+                type: string
+  /authentications/password:
+    put:
+      description: Update authentication password
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Successfully updated password
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Failed to update password
+          content:
+            text/plain:
+             schema:
+               type: string
+  /authentications/roleid/{authenticationId}:
+    put:
+      description: Update roleId for another user based that has a Admin role.
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Update role for user
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Failed to update role
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserAuthTransfer:
+      type: object
+      properties:
+        authenticationId:
+          type: string
+        password:
+          type: string
+        clientId:
+          type: string
+          format: uuid
+    AuthenticationPassword:
+      type: object
+      properties:
+        authenticationId:
+          type: string
+        password:
+          type: string
