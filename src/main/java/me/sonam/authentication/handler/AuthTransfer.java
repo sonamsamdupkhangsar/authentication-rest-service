@@ -8,15 +8,15 @@ import java.util.UUID;
 public class AuthTransfer {
     private String authenticationId;
     private String password;
-    private String apiKey;
-    private UUID clientId;
+    private UUID userId;
+
     public AuthTransfer() {
 
     }
-    public AuthTransfer(String authenticationId, String password, UUID clientId) {
+    public AuthTransfer(String authenticationId, String password, UUID userId) {
         this.authenticationId = authenticationId;
         this.password = password;
-        this.clientId = clientId;
+        this.userId = userId;
     }
 
     public String getAuthenticationId() {
@@ -35,7 +35,8 @@ public class AuthTransfer {
         this.password = password;
     }
 
-    public void setClientId(UUID clientId) {
-        this.clientId = clientId;
+    public UUID getUserId() {
+        return this.userId;
     }
+
 }

@@ -49,7 +49,7 @@ public class AuthenticationMockRestServiceTest {
         LOG.info("setup mock");
         MockitoAnnotations.openMocks(this);
         RouterFunction<ServerResponse> routerFunction = RouterFunctions
-                .route(RequestPredicates.POST("/public/authentications/authenticate"),
+                .route(RequestPredicates.POST("/authentications/authenticate"),
                         handler::authenticate);
         this.webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();
     }
@@ -61,7 +61,7 @@ public class AuthenticationMockRestServiceTest {
         assertThat(webTestClient).isNotNull();
 
         LOG.info("authenticate");
-        webTestClient.post().uri("/public/authentications/authenticate")
+        webTestClient.post().uri("/authentications/authenticate")
                 .bodyValue(new AuthTransfer("yakuser", "pass", UUID.randomUUID()))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)

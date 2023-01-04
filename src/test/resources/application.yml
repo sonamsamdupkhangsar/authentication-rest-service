@@ -2,7 +2,7 @@ logging:
   level:
     root: error
     me:
-      sonam: info
+      sonam: debug
 info:
   app:
     name: Springboot me.sonam.account.Application
@@ -34,4 +34,16 @@ jwt-rest-service: http://localhost:{port}/create/{username}/{audience}/{expireFi
 audience: sonam.cloud
 expireField: 10 # Hours Per Calendar Api
 expireIn: 24 # expire in 24 hours
-apiKey: dummy-api-key
+
+me.sonam.jwt-validator:
+  permitpath:
+    - path: /api/health/*
+    - path: /authentications/authenticate
+    - path: /authentications
+      httpMethods: POST
+
+jwt-rest-service-public-key-id: http://localhost:{port}/jwt-rest-service/publickeys/{keyId}
+
+application-rest-service:
+  root: http://application-rest-service-mychart.backend.svc.cluster.local:80/applications
+  client-role: /clients/{clientId}/users/{userId}

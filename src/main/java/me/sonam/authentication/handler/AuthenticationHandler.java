@@ -24,7 +24,7 @@ public class AuthenticationHandler {
     public Mono<ServerResponse> authenticate(ServerRequest serverRequest) {
         LOG.info("authenticate user");
 
-        return authenticationService.authenticate(serverRequest.bodyToMono(AuthTransfer.class))
+        return authenticationService.authenticate(serverRequest.bodyToMono(AuthenticationPassword.class))
                 .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("authenticate failed", throwable);
@@ -36,7 +36,7 @@ public class AuthenticationHandler {
     public Mono<ServerResponse> createAuthentication(ServerRequest serverRequest) {
         LOG.info("create authentication");
 
-        return authenticationService.createAuthentication(serverRequest.bodyToMono(AuthenticationPassword.class))
+        return authenticationService.createAuthentication(serverRequest.bodyToMono(AuthTransfer.class))
                 .flatMap(s -> ServerResponse.created(URI.create("/authentications")).contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("create authentication failed", throwable);
@@ -70,21 +70,9 @@ public class AuthenticationHandler {
                 });
     }
 
-    public Mono<ServerResponse> updateRoleId(ServerRequest serverRequest) {
-        LOG.info("create authentication");
-        String authenticationId = serverRequest.pathVariable("authenticationId");
-
-        return authenticationService.updateRoleId(serverRequest.bodyToMono(String.class), authenticationId)
-                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable -> {
-                    LOG.error("update role id failed", throwable);
-                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(throwable.getMessage());
-                });
-    }
-
     public Mono<ServerResponse> delete(ServerRequest serverRequest) {
         LOG.info("delete user");
+        LOG.info("auth: {}", SecurityContextHolder.getContext().getAuthentication());
         String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
         return authenticationService.delete(authenticationId)

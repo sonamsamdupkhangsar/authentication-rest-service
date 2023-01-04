@@ -48,10 +48,8 @@ public class Router {
                         handler::createAuthentication)
                 .andRoute(PUT("/authentications/activate/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
                         handler::activateAuthentication)
-                .andRoute(PUT("/public/authentications/password").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(PUT("/authentications/password").and(accept(MediaType.APPLICATION_JSON)),
                         handler::updatePassword)
-                .andRoute(PUT("/authentications/roleid/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
-                        handler::updateRoleId)
                 .andRoute(DELETE("/authentications").and(accept(MediaType.APPLICATION_JSON)),
                         handler::delete);
     }

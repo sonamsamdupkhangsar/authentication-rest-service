@@ -2,8 +2,6 @@ openapi: "3.0.2"
 info:
   title: Authentication Api, authentication-rest-service.
   version: "1.0"
-servers:
-  - url: https://api.server.test/v1
 
 security:
   - bearerAuth: []
@@ -113,34 +111,6 @@ paths:
             text/plain:
              schema:
                type: string
-  /authentications/roleid/{authenticationId}:
-    put:
-      description: Update roleId for another user based that has a Admin role.
-      parameters:
-        - name: authenticationId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          text/plain:
-            schema:
-              type: string
-      responses:
-        '200':
-          description: Update role for user
-          content:
-            text/plain:
-              schema:
-                type: string
-        '400':
-          description: Failed to update role
-          content:
-            text/plain:
-              schema:
-                type: string
 components:
   securitySchemes:
     bearerAuth:

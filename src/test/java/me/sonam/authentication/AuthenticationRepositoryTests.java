@@ -40,7 +40,7 @@ public class AuthenticationRepositoryTests {
 
     @Test
     public void saveAuthenticate() {
-        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(),
                 UUID.randomUUID(), true, LocalDateTime.now(), true);
         Mono<Authentication> authenticationMono = authenticationRepository.save(authentication);
 
@@ -67,7 +67,7 @@ public class AuthenticationRepositoryTests {
     @Test
     public void updatePassword() {
         LOG.info("save authentication object");
-        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
+        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(),
                 UUID.randomUUID(), true, LocalDateTime.now(), true);
         authenticationRepository.save(authentication).subscribe();
 
@@ -82,26 +82,5 @@ public class AuthenticationRepositoryTests {
                 )
                 .expectComplete().verify();
     }
-
-    @Test
-    public void updateRoleId() {
-        LOG.info("save authentication object");
-        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(), UUID.randomUUID(),
-                UUID.randomUUID(), true, LocalDateTime.now(), true);
-        authenticationRepository.save(authentication).subscribe();
-
-        LOG.info("update roleId");
-        UUID uuid = UUID.randomUUID();
-        authenticationRepository.updateRoleId(uuid, "Yakman").subscribe();
-
-        authenticationRepository.findById("Yakman").as(StepVerifier::create)
-                .expectNextMatches(authentication1 -> {
-                            LOG.info("assert role '{}' matches with the roleId: {}", uuid, authentication1.getRoleId());
-                            return authentication1.getRoleId().equals(uuid);
-                        }
-                )
-                .expectComplete().verify();
-    }
-
 
 }

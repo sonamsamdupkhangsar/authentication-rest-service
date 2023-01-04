@@ -33,3 +33,6 @@ jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/c
 audience: sonam.cloud
 expireField: 10 # Hours Per Calendar Api
 expireIn: 24 # expire in 24 hours
+
+permitPaths: /api/health/*
+jwt-rest-service-public-key-id: http://localhost:{port}/jwt-rest-service/publickeys/{keyId}
