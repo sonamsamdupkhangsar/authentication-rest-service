@@ -15,7 +15,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthenticationPassword'
+              $ref: '#/components/schemas/UserAuthTransfer'
+              example:
+                authenticationId: rubberduck_1001
+                password: 001231$1x
+                clientId: uuid-number-generated-value
       responses:
         '201':
           description: Successfully created authentication
@@ -23,12 +27,16 @@ paths:
             text/plain:
               schema:
                 type: string
+                example:
+                  text: uuid-value-of-authentication-id
         '400':
           description: Failed to create authentication
           content:
             text/plain:
               schema:
                 type: string
+                example:
+                  text: some error code
     delete:
       description: Delete authentication associated with the JWT
       responses:
@@ -77,6 +85,8 @@ paths:
           schema:
             type: string
             format: uuid
+          examples:
+            200_OK
       responses:
         '200':
           description: Successfully activated authenticationId.
