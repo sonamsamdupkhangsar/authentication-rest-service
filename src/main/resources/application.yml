@@ -1,6 +1,6 @@
 logging:
   level:
-    root: error
+    root: info
     me:
       sonam: info
 info:
@@ -29,10 +29,17 @@ application-rest-service:
   root: http://application-rest-service-mychart.backend.svc.cluster.local:80/applications
   client-role: /clients/{clientId}/users/{userId}
 
-jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/create/{username}/{audience}/{expireField}/{expireIn}
+jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwtcreate/{username}/{audience}/{expireField}/{expireIn}
 audience: sonam.cloud
 expireField: 10 # Hours Per Calendar Api
 expireIn: 24 # expire in 24 hours
 
-permitPaths: /api/health/*
-jwt-rest-service-public-key-id: http://localhost:{port}/jwt-rest-service/publickeys/{keyId}
+jwt-rest-service-public-key-id: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwt-rest-service/publickeys/{keyId}
+
+
+me.sonam.jwt-validator:
+  permitpath:
+    - path: /api/health/*
+    - path: /authentications/authenticate
+    - path: /authentications
+      httpMethods: POST

@@ -78,7 +78,7 @@ public class AuthenticationConsumerIntegTest {
      * @throws IOException
      */
     @Test
-    public void TestAndSecretAreSet(MockServer mockServer) throws IOException {
+    public void createApplicationUserRoleGroupNamesPact(MockServer mockServer) throws IOException {
         LOG.info("starting mock server");
         HttpResponse httpResponse = Request.Get(mockServer.getUrl() + "/applications/clients/"+clientId+"/users/"+userId)
                   .addHeader("Authorization", "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ")
@@ -98,7 +98,8 @@ public class AuthenticationConsumerIntegTest {
 
         assertThat(map.get("userRole")).isNotNull();
         assertThat(map.get("groupNames")).isNotNull();
-        //assertThat(map.get("id")).isNotNull();
-        //assertThat(map.get("issuer")).isEqualTo("sonam.cloud");
     }
+
+
+
 }
