@@ -91,6 +91,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                     });
                 })
                 .flatMap(clientUserRole -> {
+
                     WebClient.ResponseSpec responseSpec = webClient.get().uri(
                             jwtRestService.replace("{username}", authenticationPassword.getAuthenticationId())
                                     .replace("{audience}", audience)
@@ -123,8 +124,8 @@ public class SimpleAuthenticationService implements AuthenticationService {
                          })
                          .flatMap(authentication -> authenticationRepository.save(authentication))
                          .flatMap(authentication1 -> {
-                             LOG.info("created authentication1: {}", authentication1);
-                            return Mono.just("create Authentication success for authId: " + authentication1.getAuthenticationId());
+                             LOG.info("authentication created successfully for authId: {}", authentication1);
+                            return Mono.just(authentication1.getAuthenticationId());
                          }));
     }
 

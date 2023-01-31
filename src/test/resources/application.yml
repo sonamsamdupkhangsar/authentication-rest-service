@@ -47,3 +47,7 @@ jwt-rest-service-public-key-id: http://localhost:{port}/jwt-rest-service/publick
 application-rest-service:
   root: http://application-rest-service-mychart.backend.svc.cluster.local:80/applications
   client-role: /clients/{clientId}/users/{userId}
+
+eureka:
+  client:
+    enabled: false

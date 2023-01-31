@@ -23,30 +23,17 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
  * Set AccountService methods route for checking active and to actiate acccount
  */
 @Configuration
-@OpenAPIDefinition(info = @Info(title = "Swagger Demo", version = "1.0", description = "Documentation APIs v1.0"))
-
 public class Router {
     private static final Logger LOG = LoggerFactory.getLogger(Router.class);
 
     @Bean
-    @RouterOperations(
-            {
-                    @RouterOperation(path = "/authenticate"
-                    , produces = {
-                        MediaType.APPLICATION_JSON_VALUE}, method= RequestMethod.PUT,
-                         operation = @Operation(operationId="authenticate", responses = {
-                            @ApiResponse(responseCode = "200", description = "successful operation"),
-                                 @ApiResponse(responseCode = "400", description = "invalid user id")}
-                    ))
-            }
-    )
     public RouterFunction<ServerResponse> route(AuthenticationHandler handler) {
         LOG.info("building authenticate router function");
         return RouterFunctions.route(POST("/authentications/authenticate").and(accept(MediaType.APPLICATION_JSON)),
                 handler::authenticate)
                 .andRoute(POST("/authentications").and(accept(MediaType.APPLICATION_JSON)),
                         handler::createAuthentication)
-                .andRoute(PUT("/authentications/activate/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(PUT("/authentications/activate/{id}").and(accept(MediaType.APPLICATION_JSON)),
                         handler::activateAuthentication)
                 .andRoute(PUT("/authentications/password").and(accept(MediaType.APPLICATION_JSON)),
                         handler::updatePassword)

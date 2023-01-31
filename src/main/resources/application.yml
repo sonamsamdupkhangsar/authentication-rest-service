@@ -23,18 +23,23 @@ spring:
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
     properties:
-      sslMode: REQUIRE
+      sslMode: ${DB_SSLMODE}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
 
 application-rest-service:
-  root: http://application-rest-service-mychart.backend.svc.cluster.local:80/applications
+  root: ${APPLICATION_REST_SERVICE}
   client-role: /clients/{clientId}/users/{userId}
 
-jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwtcreate/{username}/{audience}/{expireField}/{expireIn}
+#jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwts/accesstoken
 audience: sonam.cloud
 expireField: 10 # Hours Per Calendar Api
 expireIn: 24 # expire in 24 hours
 
-jwt-rest-service-public-key-id: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwt-rest-service/publickeys/{keyId}
+jwt-rest-service-public-key-id: ${JWT_REST_SERVICE}
 
 
 me.sonam.jwt-validator:
