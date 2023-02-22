@@ -12,7 +12,7 @@ Use the following to run local profile which will pick up properties defined in 
 mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
 ```
 
-Or you can do something like following too:
+Or you can do something like following too to specify the db server properties:
 
 ```
 mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8083 --jwt.issuer=sonam.us \

@@ -41,13 +41,26 @@ me.sonam.jwt-validator:
     - path: /authentications/authenticate
     - path: /authentications
       httpMethods: POST
+    - path: /authentications/activate/*
+      httpMethods: PUT
 
 jwt-rest-service-public-key-id: http://localhost:{port}/jwt-rest-service/publickeys/{keyId}
+jwt-rest-service-accesstoken: http://localhost:8081/jwts/accesstoken
 
 application-rest-service:
-  root: http://application-rest-service-mychart.backend.svc.cluster.local:80/applications
+  root: http://localhost:{port}/applications
   client-role: /clients/{clientId}/users/{userId}
 
 eureka:
   client:
     enabled: false
+
+hmackey:
+  clientId: authentication-rest-service
+  hmacMD5Algorithm: HmacMD5
+  secretKey: mysecret
+
+jwtrequest:
+  - in:  /authentications/authenticate
+    out: /applications/clients/(.)*/users/(.)*
+    jwt: request

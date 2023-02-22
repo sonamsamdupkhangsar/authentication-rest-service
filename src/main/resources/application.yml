@@ -39,7 +39,8 @@ audience: sonam.cloud
 expireField: 10 # Hours Per Calendar Api
 expireIn: 24 # expire in 24 hours
 
-jwt-rest-service-public-key-id: ${JWT_REST_SERVICE}
+jwt-rest-service-public-key-id: ${jwt-rest-service-public-key-id}
+jwt-rest-service-accesstoken: ${jwt-rest-service-accesstoken}
 
 
 me.sonam.jwt-validator:
@@ -48,3 +49,5 @@ me.sonam.jwt-validator:
     - path: /authentications/authenticate
     - path: /authentications
       httpMethods: POST
+    - path: /authentications/activate/*
+      httpMethods: PUT

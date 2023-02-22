@@ -10,13 +10,16 @@ public class AuthTransfer {
     private String password;
     private UUID userId;
 
+    private String clientId;
+
     public AuthTransfer() {
 
     }
-    public AuthTransfer(String authenticationId, String password, UUID userId) {
+    public AuthTransfer(String authenticationId, String password, UUID userId, String clientId) {
         this.authenticationId = authenticationId;
         this.password = password;
         this.userId = userId;
+        this.clientId = clientId;
     }
 
     public String getAuthenticationId() {
@@ -37,6 +40,10 @@ public class AuthTransfer {
 
     public UUID getUserId() {
         return this.userId;
+    }
+
+    public String getClientId() {
+        return this.clientId;
     }
 
 }

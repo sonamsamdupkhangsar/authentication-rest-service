@@ -1,11 +1,16 @@
 package me.sonam.authentication.handler;
 
+import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
+import me.sonam.security.util.HmacClient;
 import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
+import me.sonam.security.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -30,7 +36,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Value("${application-rest-service.root}${application-rest-service.client-role}")
     private String applicationClientRoleService;
 
-    @Value("${jwt-rest-service}")
+    @Value("${jwt-rest-service-accesstoken}")
     private String jwtRestService;
 
     @Value("${audience}")
@@ -50,10 +56,19 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Autowired
     private AuthenticationRepository authenticationRepository;
 
+    @Autowired
+    private HmacClient hmacClient;
+
+    @Autowired
+    private ReactiveRequestContextHolder reactiveRequestContextHolder;
+
     @PostConstruct
     public void setWebClient() {
         LOG.info("built webclient");
-        webClient = WebClient.builder().build();
+        webClient = WebClient.builder().filter(reactiveRequestContextHolder.headerFilter()).build();
+
+        LOG.info("clientId: {}, md5algorithm: {}, secretkey: {}", hmacClient.getClientId(),
+                hmacClient.getMd5Algoirthm(), hmacClient.getSecretKey());
     }
 
     @Override
@@ -81,8 +96,10 @@ public class SimpleAuthenticationService implements AuthenticationService {
                                  new AuthenticationException("no authentication found with username and password"));
                      }
                  }).flatMap(authentication -> {
+                     // this application endpoint does not require jwt or secuity for 'get'
+                    LOG.info("application client role endpoint: {}", applicationClientRoleService);
                     WebClient.ResponseSpec responseSpec = webClient.get().uri(
-                            applicationClientRoleService.replace("{clientId}", "clientId")
+                            applicationClientRoleService.replace("{clientId}", authenticationPassword.getClientId())
                                     .replace("{userId}", authentication.getUserId().toString()))
                             .retrieve();
                     return responseSpec.bodyToMono(String.class).map(role -> {
@@ -91,16 +108,26 @@ public class SimpleAuthenticationService implements AuthenticationService {
                     });
                 })
                 .flatMap(clientUserRole -> {
+                    final String jsonString = "{\n" +
+                            "  \"sub\": \""+hmacClient.getClientId()+"\",\n" +
+                            "  \"scope\": \"\"+hmacClient.getClientId()+\"\",\n" +
+                            "  \"clientId\": \"\"+hmacClient.getClientId()+\"\",\n" +
+                            "  \"aud\": \"service\",\n" +
+                            "  \"role\": \"service\",\n" +
+                            "  \"groups\": \"service\",\n" +
+                            "  \"expiresInSeconds\": 300\n" +
+                            "}\n";
 
-                    WebClient.ResponseSpec responseSpec = webClient.get().uri(
-                            jwtRestService.replace("{username}", authenticationPassword.getAuthenticationId())
-                                    .replace("{audience}", audience)
-                                    .replace("{expireField}", expireField)
-                                    .replace("{expireIn}", expireIn))
+                    final String hmac = Util.getHmac(hmacClient.getMd5Algoirthm(), jsonString, hmacClient.getSecretKey());
+                    LOG.info("creating hmac for jwt-rest-service: {}", jwtRestService);
+                    WebClient.ResponseSpec responseSpec = webClient.post().uri(jwtRestService)
+                            .headers(httpHeaders -> httpHeaders.add(HttpHeaders.AUTHORIZATION, hmac))
+                            .bodyValue(jsonString)
+                            .accept(MediaType.APPLICATION_JSON)
                             .retrieve();
-                    return responseSpec.bodyToMono(String.class).map(jwtToken -> {
-                        LOG.info("got jwt token: {}", jwtToken);
-                        return jwtToken;
+                    return responseSpec.bodyToMono(Map.class).map(map -> {
+                        LOG.info("got jwt token: {}", map.get("token"));
+                        return map.get("token").toString();
                     });
                 }));
     }
@@ -151,6 +178,11 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .filter(authentication -> !authentication.getActive())
                 .switchIfEmpty(Mono.error(new AuthenticationException("authentication is active, cannot delete")))
                 .flatMap(authentication ->   authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
+                .flatMap(integer ->
+                    {
+                    LOG.info("integer: {}", integer);
+                    return Mono.just(integer);
+                })
                 .thenReturn("deleted: " + authenticationId);
     }
 
