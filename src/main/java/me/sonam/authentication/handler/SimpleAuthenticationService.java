@@ -14,12 +14,12 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class SimpleAuthenticationService implements AuthenticationService {
@@ -102,23 +102,53 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             applicationClientRoleService.replace("{clientId}", authenticationPassword.getClientId())
                                     .replace("{userId}", authentication.getUserId().toString()))
                             .retrieve();
-                    return responseSpec.bodyToMono(String.class).map(role -> {
-                        LOG.info("got role: {}", role);
-                        return role;
+                    return responseSpec.bodyToMono(Map.class).map(clientUserRole -> {
+                        LOG.info("got role: {}", clientUserRole);
+                        return clientUserRole;
+                    }).onErrorResume(throwable -> {
+                        LOG.error("application rest call failed: {}", throwable.getMessage());
+                        if (throwable instanceof WebClientResponseException) {
+                            WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                            LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+                        }
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("userRole", "");
+                        String[] groupNames = {""};
+                        map.put("groupNames", groupNames);
+                        return Mono.just(map);
                     });
                 })
                 .flatMap(clientUserRole -> {
-                    final String jsonString = "{\n" +
-                            "  \"sub\": \""+hmacClient.getClientId()+"\",\n" +
-                            "  \"scope\": \"\"+hmacClient.getClientId()+\"\",\n" +
-                            "  \"clientId\": \"\"+hmacClient.getClientId()+\"\",\n" +
-                            "  \"aud\": \"service\",\n" +
-                            "  \"role\": \"service\",\n" +
-                            "  \"groups\": \"service\",\n" +
-                            "  \"expiresInSeconds\": 300\n" +
-                            "}\n";
 
-                    final String hmac = Util.getHmac(hmacClient.getMd5Algoirthm(), jsonString, hmacClient.getSecretKey());
+
+                    final StringBuilder userJwtJson = new StringBuilder("{\n");
+                    userJwtJson.append("  \"sub\": \"").append(authenticationPassword.getAuthenticationId()).append("\",\n")
+                            .append("  \"scope\": \"backend\",\n")
+                            .append("  \"clientId\": \"").append(authenticationPassword.getClientId()).append("\",\n")
+                            .append("  \"aud\": \"backend\",\n")
+                            .append("  \"role\": \"").append(clientUserRole.get("userRole")).append("\",\n")
+                            .append("  \"groups\": \"");
+                            String[] groupNames = (String[])clientUserRole.get("groupNames");;
+                            Arrays.stream(groupNames).forEach(s -> userJwtJson.append(s));
+                            userJwtJson.append("\",\n")
+                            .append("  \"expiresInSeconds\": 86400\n")
+                            .append("}\n");
+
+                    final StringBuilder jsonString = new StringBuilder("{\n");
+                    jsonString.append("  \"sub\": \"").append(hmacClient.getClientId()).append("\",\n")
+                            .append("  \"scope\": \"").append(hmacClient.getClientId()).append("\",\n")
+                            .append("  \"clientId\": \"").append(hmacClient.getClientId()).append("\",\n")
+                            .append("  \"aud\": \"service\",\n")
+                            .append("  \"role\": \"service\",\n")
+                            .append("  \"groups\": \"service\",\n")
+                            .append("  \"expiresInSeconds\": 300,\n")
+                            .append(" \"userJwt\": ").append(userJwtJson.toString())
+                            .append("}\n");
+
+
+                    LOG.info("jsonString: {}", jsonString);
+
+                    final String hmac = Util.getHmac(hmacClient.getMd5Algoirthm(), jsonString.toString(), hmacClient.getSecretKey());
                     LOG.info("creating hmac for jwt-rest-service: {}", jwtRestService);
                     WebClient.ResponseSpec responseSpec = webClient.post().uri(jwtRestService)
                             .headers(httpHeaders -> httpHeaders.add(HttpHeaders.AUTHORIZATION, hmac))
@@ -128,7 +158,18 @@ public class SimpleAuthenticationService implements AuthenticationService {
                     return responseSpec.bodyToMono(Map.class).map(map -> {
                         LOG.info("got jwt token: {}", map.get("token"));
                         return map.get("token").toString();
-                    });
+                    }).onErrorResume(throwable -> {
+                                LOG.error("account rest call failed: {}", throwable.getMessage());
+                                if (throwable instanceof WebClientResponseException) {
+                                    WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                                    LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+                                    return Mono.error(new AuthenticationException("jwt rest  api call failed with error: " +
+                                            webClientResponseException.getResponseBodyAsString()));
+                                }
+                                else {
+                                    return Mono.error(new AuthenticationException("Application api call failed with error: " +throwable.getMessage()));
+                                }
+                            });
                 }));
     }
 

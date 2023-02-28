@@ -43,11 +43,17 @@ jwt-rest-service-public-key-id: ${jwt-rest-service-public-key-id}
 jwt-rest-service-accesstoken: ${jwt-rest-service-accesstoken}
 
 
-me.sonam.jwt-validator:
-  permitpath:
-    - path: /api/health/*
-    - path: /authentications/authenticate
-    - path: /authentications
-      httpMethods: POST
-    - path: /authentications/activate/*
-      httpMethods: PUT
+
+permitpath:
+  - path: /api/health/*
+  - path: /authentications/authenticate
+  - path: /authentications
+    httpMethods: POST
+  - path: /authentications/activate/*
+    httpMethods: PUT
+
+
+jwtrequest:
+  - in:  /authentications/authenticate
+    out: /applications/clients/(.)*/users/(.)*
+    jwt: request
