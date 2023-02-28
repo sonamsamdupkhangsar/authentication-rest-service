@@ -16,6 +16,10 @@
     <name>authentication-rest-service</name>
     <description>Authentication rest service that creates Authentication and generates jwt for authTransfer/password with apiKey</description>
 
+    <properties>
+        <spring-cloud.version>2021.0.4</spring-cloud.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -24,6 +28,15 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-r2dbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.sonam</groupId>
+            <artifactId>jwt-validator</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
         <dependency>
             <groupId>io.r2dbc</groupId>
@@ -134,6 +147,14 @@
                     </configuration>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -144,4 +165,15 @@
             <url>https://maven.pkg.github.com/sonamsamdupkhangsar/authentication-rest-service</url>
         </repository>
     </distributionManagement>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

@@ -42,7 +42,7 @@ istio:
   enabled: false
 
 ingress:
-  enabled: true
+  enabled: false
   ingressClass: nginx
   hosts:
     - host: authentication-rest-service.sonam.cloud
@@ -73,16 +73,31 @@ tolerations: []
 
 affinity: {}
 
+
+postgres:
+  port: "5432"
+  service: authentication-minimal-cluster
+  secretfile: sonam.authentication-minimal-cluster.credentials.postgresql.acid.zalan.do
+  dbname: authentication
+
+envs:
+  - name: DB_SSLMODE
+    value: REQUIRE
+  - name: JWT_REST_SERVICE
+    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwts/publickeys/{keyId}
+  - name: APPLICATION_REST_SERVICE
+    value: http://application-rest-service-mychart.backend.svc.cluster.local:80/applications
+
 health:
   liveness:
     path: /api/health/liveness
     port: 8080
-    initialDelaySeconds: 60
+    initialDelaySeconds: 5
     periodSeconds: 5
     failureThreshold: 5
   readiness:
     path: /api/health/readiness
     port: 8080
-    initialDelaySeconds: 60
+    initialDelaySeconds: 5
     periodSeconds: 5
     failureThreshold: 5

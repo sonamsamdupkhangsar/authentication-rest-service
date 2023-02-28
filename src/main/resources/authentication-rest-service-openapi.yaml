@@ -1,0 +1,180 @@
+openapi: "3.0.2"
+info:
+  title: Authentication Api, authentication-rest-service.
+  version: "1.0"
+
+servers:
+  - url: http://localhost:8083
+    description: local development server
+
+paths:
+  /authentications:
+    post:
+      description: Create a new authentication.  This api is called when a new user is signed up. No JWT required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAuthTransfer'
+              example:
+                authenticationId: rubberduck_1001
+                password: 001231$1x
+                clientId: uuid-number-generated-value
+      responses:
+        '201':
+          description: Successfully created authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Authentication created successfully for authenticationId rubberduck_1001
+        '400':
+          description: Failed to create authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                example:
+                  error: Invalid authentication id
+    delete:
+      security:
+        - bearerAuth: []
+      description: Delete authentication associated with the JWT.
+      responses:
+        '200':
+          description: Deleted authentication for the user in the JWT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Failed to delete authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /authentications/authenticate:
+    post:
+      description: "Authenticate user with authenticationId and password.  This will get client role service in the 
+                  jwt token.  This will return the jwt."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAuthTransfer'
+      responses:
+        '200':
+          description: User authenticated successfully
+          content:
+             application/json:
+               schema:
+                 type: object
+                 properties:
+                   message:
+                     type: string
+        '400':
+          description: Failed to authenticate user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /authentications/activate/{authenticationId}:
+    put:
+      description: Set authentication active status to true.  This service will be called from account-rest-service/activate/{authenticationId}.
+                    This service is called internally, should not be exposed externally.  This does not require a JWT claim
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully activated authenticationId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Failed to activate authenticationId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /authentications/password:
+    put:
+      description: Update authentication password. No JWT required
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Successfully updated password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Failed to update password
+          content:
+            application/json:
+             schema:
+               type: object
+               properties:
+                 error:
+                   type: string
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserAuthTransfer:
+      type: object
+      properties:
+        authenticationId:
+          type: string
+        password:
+          type: string
+        clientId:
+          type: string
+          format: uuid
+    AuthenticationPassword:
+      type: object
+      properties:
+        authenticationId:
+          type: string
+        password:
+          type: string
