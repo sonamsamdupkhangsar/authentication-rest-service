@@ -36,11 +36,8 @@ application-rest-service:
   root: ${APPLICATION_REST_SERVICE}
   client-role: /applications/clients/{clientId}/users/{userId}
 
-jwt-rest-service:
-  root: ${JWT_REST_SERVICE}
-  accesstoken: /jwts/accesstoken
-
 jwt-rest-service-public-key-id: ${JWT_REST_SERVICE}/jwts/publickeys/{keyId}
+jwt-rest-service-accesstoken: ${JWT_REST_SERVICE}/jwts/accesstoken
 
 audience: ${JWT_USER_AUDIENCE}
 scope: ${JWT_USER_SCOPE}
