@@ -12,12 +12,15 @@ eureka:
   client:
     enabled: false
 
+audience: https://sonam.cloud
+scope: backend
+expiresInSeconds: 86400
+
 # jwt-rest-service on port 8081 local server
 jwt-rest-service-public-key-id: http://localhost:8081/jwts/publickeys/{keyId}
 jwt-rest-service-accesstoken: http://localhost:8081/jwts/accesstoken
 APPLICATION_REST_SERVICE: http://localhost:8082/applications
 
-hmackey:
-  clientId: authentication-rest-service
-  hmacMD5Algorithm: HmacMD5
-  secretKey: mysecret
+HMAC_CLIENTID: authentication-rest-service
+HMAC_MD5ALGORITHM: HmacMD5
+HMAC_SECRET: mysecret

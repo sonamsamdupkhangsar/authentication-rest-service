@@ -42,11 +42,11 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Value("${audience}")
     private String audience;
 
-    @Value("${expireField}")
-    private String expireField;
+    @Value("${scope}")
+    private String scope;
 
-    @Value("${expireIn}")
-    private String expireIn;
+    @Value("${expiresInSeconds}")
+    private int expiresInSeconds;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -123,15 +123,15 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
                     final StringBuilder userJwtJson = new StringBuilder("{\n");
                     userJwtJson.append("  \"sub\": \"").append(authenticationPassword.getAuthenticationId()).append("\",\n")
-                            .append("  \"scope\": \"backend\",\n")
+                            .append("  \"scope\": \""+scope+"\",\n")
                             .append("  \"clientId\": \"").append(authenticationPassword.getClientId()).append("\",\n")
-                            .append("  \"aud\": \"backend\",\n")
+                            .append("  \"aud\": \""+audience+"\",\n")
                             .append("  \"role\": \"").append(clientUserRole.get("userRole")).append("\",\n")
                             .append("  \"groups\": \"");
                             String[] groupNames = (String[])clientUserRole.get("groupNames");;
                             Arrays.stream(groupNames).forEach(s -> userJwtJson.append(s));
                             userJwtJson.append("\",\n")
-                            .append("  \"expiresInSeconds\": 86400\n")
+                            .append("  \"expiresInSeconds\": "+expiresInSeconds+"\n")
                             .append("}\n");
 
                     final StringBuilder jsonString = new StringBuilder("{\n");
