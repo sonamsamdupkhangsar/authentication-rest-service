@@ -84,9 +84,15 @@ envs:
   - name: DB_SSLMODE
     value: REQUIRE
   - name: JWT_REST_SERVICE
-    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwts/publickeys/{keyId}
+    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
   - name: APPLICATION_REST_SERVICE
-    value: http://application-rest-service-mychart.backend.svc.cluster.local:80/applications
+    value: http://application-rest-service-mychart.backend.svc.cluster.local:80
+  - name: JWT_USER_AUDIENCE
+    value: https://sonam.cloud
+  - name: JWT_USER_SCOPE
+    value: backend
+  - name: JWT_USER_EXPIRES_IN_SECONDS
+    value: 86400
 
 health:
   liveness:
@@ -101,3 +107,19 @@ health:
     initialDelaySeconds: 5
     periodSeconds: 5
     failureThreshold: 5
+
+secretFiles:
+  - file: eureka-discovery
+    keys:
+      - key: user
+        name: EUREKA_USER
+      - key: password
+        name: EUREKA_PASSWORD
+  - file: authentication-rest-service
+    keys:
+      - key: hmac.clientId
+        name: HMAC_CLIENTID
+      - key: hmac.algorithm
+        name: HMAC_MD5ALGORITHM
+      - key: hmac.secret
+        name: HMAC_SECRET
