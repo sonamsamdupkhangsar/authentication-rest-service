@@ -36,8 +36,8 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Value("${application-rest-service.root}${application-rest-service.client-role}")
     private String applicationClientRoleService;
 
-    @Value("${jwt-rest-service-accesstoken}")
-    private String jwtRestService;
+    @Value("${jwt-service.root}${jwt-service.accesstoken}")
+    private String jwtServiceEndpoint;
 
     @Value("${audience}")
     private String audience;
@@ -67,8 +67,8 @@ public class SimpleAuthenticationService implements AuthenticationService {
         LOG.info("built webclient");
         webClient = WebClient.builder().filter(reactiveRequestContextHolder.headerFilter()).build();
 
-        LOG.info("clientId: {}, md5algorithm: {}, secretkey: {}", hmacClient.getClientId(),
-                hmacClient.getMd5Algoirthm(), hmacClient.getSecretKey());
+        LOG.info("clientId: {}, algorithm: {}, secretkey: {}", hmacClient.getClientId(),
+                hmacClient.getAlgorithm(), hmacClient.getSecretKey());
     }
 
     @Override
@@ -148,9 +148,9 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
                     LOG.info("jsonString: {}", jsonString);
 
-                    final String hmac = Util.getHmac(hmacClient.getMd5Algoirthm(), jsonString.toString(), hmacClient.getSecretKey());
-                    LOG.info("creating hmac for jwt-rest-service: {}", jwtRestService);
-                    WebClient.ResponseSpec responseSpec = webClient.post().uri(jwtRestService)
+                    final String hmac = Util.getHmac(hmacClient.getAlgorithm(), jsonString.toString(), hmacClient.getSecretKey());
+                    LOG.info("creating hmac for jwt-rest-service: {}", jwtServiceEndpoint);
+                    WebClient.ResponseSpec responseSpec = webClient.post().uri(jwtServiceEndpoint)
                             .headers(httpHeaders -> httpHeaders.add(HttpHeaders.AUTHORIZATION, hmac))
                             .bodyValue(jsonString)
                             .accept(MediaType.APPLICATION_JSON)

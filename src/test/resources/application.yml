@@ -29,9 +29,6 @@ POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
 
-
-jwt-rest-service: http://localhost:{port}/create/{username}/{audience}/{expireField}/{expireIn}
-
 audience: https://sonam.cloud
 scope: backend
 expiresInSeconds: 86400
@@ -44,20 +41,22 @@ permitpath:
   - path: /authentications/activate/*
     httpMethods: PUT
 
-jwt-rest-service-public-key-id: http://localhost:{port}/jwt-rest-service/publickeys/{keyId}
-jwt-rest-service-accesstoken: http://localhost:8081/jwts/accesstoken
-
 application-rest-service:
-  root: http://localhost:{port}/applications
-  client-role: /clients/{clientId}/users/{userId}
+  root: http://localhost:{port}
+  client-role: /applications/clients/{clientId}/users/{userId}
+
+jwt-service:
+  root: http://localhost:{port}
+  public-key-id: /jwts/publickeys/{keyId}
+  accesstoken: /jwts/accesstoken
 
 eureka:
   client:
     enabled: false
 
-hmackey:
+hmacKey:
   clientId: authentication-rest-service
-  hmacMD5Algorithm: HmacMD5
+  algorithm: HmacMD5
   secretKey: mysecret
 
 jwtrequest:
