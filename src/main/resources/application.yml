@@ -58,7 +58,7 @@ jwtrequest:
     out: /applications/clients/(.)*/users/(.)*
     jwt: request
 
-hmackey:
+hmacKey:
   clientId: ${HMAC_CLIENTID}
   algorithm: ${HMAC_ALGORITHM}
   secretKey: ${HMAC_SECRET}
