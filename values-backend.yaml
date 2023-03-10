@@ -120,6 +120,6 @@ secretFiles:
       - key: hmac.clientId
         name: HMAC_CLIENTID
       - key: hmac.algorithm
-        name: HMAC_MD5ALGORITHM
+        name: HMAC_ALGORITHM
       - key: hmac.secret
         name: HMAC_SECRET
