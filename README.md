@@ -55,16 +55,19 @@ helm install project-api sonam/mychart -f values.yaml --version 0.1.12 --namespa
 
 ##Instruction for port-forwarding database pod
 ```
-export PGMASTER=$(kubectl get pods -o jsonpath={.items..metadata.name} -l application=spilo,cluster-name=project-minimal-cluster,spilo-role=master -n yournamesapce); 
-echo $PGMASTER;
-kubectl port-forward $PGMASTER 6432:5432 -n backend;
+export project=<PROJECTNAME>
+export yournamespace=<NAMESPACE>
+export PGMASTER=$(kubectl get pods -o jsonpath={.items..metadata.name} -l application=spilo,cluster-name=$project-minimal-cluster,spilo-role=master -n $yournamespace) 
+echo $PGMASTER
+kubectl port-forward $PGMASTER 6432:5432 -n backend
 ```
 
 ###Login to database instruction
 ```
-export PGPASSWORD=$(kubectl get secret <SECRET_NAME> -o 'jsonpath={.data.password}' -n backend | base64 -d);
-echo $PGPASSWORD;
-export PGSSLMODE=require;
+export secretName=<USER>.<PROJECT>-minimal-cluster.credentials.postgresql.acid.zalan.do
+export PGPASSWORD=$(kubectl get secret $secretName -o 'jsonpath={.data.password}' -n backend | base64 -d)
+echo $PGPASSWORD
+export PGSSLMODE=require
 psql -U <USER> -d projectdb -h localhost -p 6432
 
 ```
