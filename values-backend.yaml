@@ -93,6 +93,9 @@ envs:
     value: backend
   - name: JWT_USER_EXPIRES_IN_SECONDS
     value: 86400
+  - name: DEFAULT_ZONE
+    value: https://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
+
 
 health:
   liveness:
