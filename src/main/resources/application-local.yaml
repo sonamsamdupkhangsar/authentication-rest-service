@@ -8,9 +8,15 @@ POSTGRES_DBNAME: authentication
 POSTGRES_SERVICE: localhost:5432
 DB_SSLMODE: disable
 
+EUREKA_HOST: localhost:8761
+EUREKA_USER: test
+EUREKA_PASSWORD: test
+
 eureka:
   client:
-    enabled: false
+    enabled: true
+
+DEFAULT_ZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 
 audience: https://sonam.cloud
 scope: backend
