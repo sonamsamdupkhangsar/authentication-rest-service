@@ -83,6 +83,8 @@ postgres:
 envs:
   - name: DB_SSLMODE
     value: REQUIRE
+  - name: EUREKA_HOST
+    value: discovery-service.sonam.cloud
   - name: JWT_REST_SERVICE
     value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
   - name: APPLICATION_REST_SERVICE
