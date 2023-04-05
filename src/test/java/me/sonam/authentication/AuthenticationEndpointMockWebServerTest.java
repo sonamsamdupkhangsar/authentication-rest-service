@@ -162,15 +162,14 @@ public class AuthenticationEndpointMockWebServerTest {
 
         final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
         final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        // first it will call send hmac to get accesstoken 'jwt/accesstoken'
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
         final String clientRoleGroups = "{\"userRole\":\"user\",\"groupNames\":[\"admin1touser\",\"employee\"]}";
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(clientRoleGroups));
+        // then return this for client role groups api call
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
+        // then return this jwt token again when authentication api calls the jwt-rest-service to get the jwt token
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
-
-        //final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-//        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(jwt));
-        //final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
 
         LOG.info("call authenticate rest endpoint in this application");
         EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/authenticate")
@@ -187,20 +186,19 @@ public class AuthenticationEndpointMockWebServerTest {
         assertThat(request.getMethod()).isEqualTo("POST");
         assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
-
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
         assertThat(request.getPath()).startsWith("/applications/clients");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
         //the body is empty for some reason.
         String body = new String(request.getBody().getBuffer().readByteArray());
         LOG.info("1st request for getting clientRoleGroups with path: {}", request.getPath());
         LOG.info("request: {}", body);
-
-        request = mockWebServer.takeRequest();
-        LOG.info("2nd request is to get JWT from jwt-rest-service with path: {}", request.getPath());
-        assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(body).isNotEmpty();
     }
 
 
@@ -259,23 +257,18 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("assert result contains authId: {}", result.getResponseBody());
         assertThat(result.getResponseBody().get("message")).isEqualTo("Authentication created successfully for authenticationId: user4");
 
-     //   final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
         authenticationRepository.updateAuthenticationActiveTrue("user4").subscribe(integer -> LOG.info("set authentication to Active"));
 
         final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
         final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        // this is for returning a jwt token on hmac generation
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
         final String clientRoleGroups = "{\"userRole\":\"user\",\"groupNames\":[\"admin1touser\",\"employee\"]}";
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(clientRoleGroups));
-
-      //  final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        //final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        // return this response for role groups for clients call
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
+        // this is for generating the jwt token when jwt-rest-service is called at /jwt/accesstoken
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
-
-//        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(jwt));
 
         LOG.info("call authenticate rest endpoint in this application");
         result = webTestClient.post().uri("/authentications/authenticate")
@@ -292,6 +285,11 @@ public class AuthenticationEndpointMockWebServerTest {
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
+        assertThat(request.getPath()).startsWith("/applications/clients");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
 
         //the body is empty for some reason.
         String body = new String(request.getBody().getBuffer().readByteArray());
@@ -301,10 +299,10 @@ public class AuthenticationEndpointMockWebServerTest {
 
         assertThat(request.getPath().startsWith("/clients/clientId/users/"));
 
-        request = mockWebServer.takeRequest();
+        //request = mockWebServer.takeRequest();
         LOG.info("2nd request is to get JWT from jwt-rest-service with path: {}", request.getPath());
-        assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        //assertThat(request.getMethod()).isEqualTo("POST");
+        //assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
 
         LOG.info("jwt: {}", result.getResponseBody());

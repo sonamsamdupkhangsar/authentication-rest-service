@@ -51,8 +51,6 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private WebClient webClient;
-
     @Autowired
     private AuthenticationRepository authenticationRepository;
 
@@ -62,10 +60,12 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
 
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
     @PostConstruct
     public void setWebClient() {
-        LOG.info("built webclient");
-        webClient = WebClient.builder().filter(reactiveRequestContextHolder.headerFilter()).build();
+        webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
 
         LOG.info("clientId: {}, algorithm: {}, secretkey: {}", hmacClient.getClientId(),
                 hmacClient.getAlgorithm(), hmacClient.getSecretKey());
@@ -98,7 +98,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                  }).flatMap(authentication -> {
                      // this application endpoint does not require jwt or secuity for 'get'
                     LOG.info("application client role endpoint: {}", applicationClientRoleService);
-                    WebClient.ResponseSpec responseSpec = webClient.get().uri(
+                    WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(
                             applicationClientRoleService.replace("{clientId}", authenticationPassword.getClientId())
                                     .replace("{userId}", authentication.getUserId().toString()))
                             .retrieve();
@@ -119,8 +119,6 @@ public class SimpleAuthenticationService implements AuthenticationService {
                     });
                 })
                 .flatMap(clientUserRole -> {
-
-
                     final StringBuilder userJwtJson = new StringBuilder("{\n");
                     userJwtJson.append("  \"sub\": \"").append(authenticationPassword.getAuthenticationId()).append("\",\n")
                             .append("  \"scope\": \""+scope+"\",\n")
@@ -128,8 +126,8 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             .append("  \"aud\": \""+audience+"\",\n")
                             .append("  \"role\": \"").append(clientUserRole.get("userRole")).append("\",\n")
                             .append("  \"groups\": \"");
-                            String[] groupNames = (String[])clientUserRole.get("groupNames");;
-                            Arrays.stream(groupNames).forEach(s -> userJwtJson.append(s));
+                            List<String> groupNames = (ArrayList)clientUserRole.get("groupNames");;
+                            groupNames.forEach(s -> userJwtJson.append(s));
                             userJwtJson.append("\",\n")
                             .append("  \"expiresInSeconds\": "+expiresInSeconds+"\n")
                             .append("}\n");
@@ -150,7 +148,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
                     final String hmac = Util.getHmac(hmacClient.getAlgorithm(), jsonString.toString(), hmacClient.getSecretKey());
                     LOG.info("creating hmac for jwt-rest-service: {}", jwtServiceEndpoint);
-                    WebClient.ResponseSpec responseSpec = webClient.post().uri(jwtServiceEndpoint)
+                    WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(jwtServiceEndpoint)
                             .headers(httpHeaders -> httpHeaders.add(HttpHeaders.AUTHORIZATION, hmac))
                             .bodyValue(jsonString)
                             .accept(MediaType.APPLICATION_JSON)
