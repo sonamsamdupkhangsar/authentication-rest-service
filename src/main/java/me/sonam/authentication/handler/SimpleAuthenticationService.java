@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -21,7 +20,7 @@ import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.*;
 
-@Service
+
 public class SimpleAuthenticationService implements AuthenticationService {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleAuthenticationService.class);
 
@@ -60,8 +59,11 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
 
-    @Autowired
     private WebClient.Builder webClientBuilder;
+
+    public SimpleAuthenticationService(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
 
     @PostConstruct
     public void setWebClient() {

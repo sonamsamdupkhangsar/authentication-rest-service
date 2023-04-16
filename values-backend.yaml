@@ -101,13 +101,13 @@ envs:
 
 health:
   liveness:
-    path: /api/health/liveness
+    path: /authentications/api/health/liveness
     port: 8080
     initialDelaySeconds: 5
     periodSeconds: 5
     failureThreshold: 5
   readiness:
-    path: /api/health/readiness
+    path: /authentications/eyapi/health/readiness
     port: 8080
     initialDelaySeconds: 5
     periodSeconds: 5

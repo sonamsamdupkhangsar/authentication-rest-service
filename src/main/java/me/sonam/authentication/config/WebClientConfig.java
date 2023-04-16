@@ -1,5 +1,8 @@
 package me.sonam.authentication.config;
 
+import me.sonam.authentication.handler.SimpleAuthenticationService;
+import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
+import me.sonam.security.jwt.PublicKeyJwtDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
@@ -17,5 +20,26 @@ public class WebClientConfig {
     public WebClient.Builder webClientBuilder() {
         LOG.info("returning load balanced webclient part");
         return WebClient.builder();
+    }
+    @LoadBalanced
+    @Bean("noFilter")
+    public WebClient.Builder webClientBuilderNoFilter() {
+        LOG.info("returning for noFilter load balanced webclient part");
+        return WebClient.builder();
+    }
+
+    @Bean
+    public PublicKeyJwtDecoder publicKeyJwtDecoder() {
+        return new PublicKeyJwtDecoder(webClientBuilderNoFilter());
+    }
+
+    @Bean
+    public ReactiveRequestContextHolder reactiveRequestContextHolder() {
+        return new ReactiveRequestContextHolder(webClientBuilderNoFilter());
+    }
+
+    @Bean
+    public SimpleAuthenticationService simpleAuthenticationService() {
+        return new SimpleAuthenticationService(webClientBuilder());
     }
 }

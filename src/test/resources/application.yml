@@ -36,7 +36,7 @@ scope: backend
 expiresInSeconds: 86400
 
 permitpath:
-  - path: /api/health/*
+  - path: /authentications/api/health/*
   - path: /authentications/authenticate
   - path: /authentications
     httpMethods: POST

@@ -46,7 +46,7 @@ scope: ${JWT_USER_SCOPE}
 expiresInSeconds: ${JWT_USER_EXPIRES_IN_SECONDS}
 
 permitpath:
-  - path: /api/health/*
+  - path: /authentications/api/health/*
   - path: /authentications/authenticate
   - path: /authentications
     httpMethods: POST
