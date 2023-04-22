@@ -72,7 +72,7 @@ public class AuthenticationRepositoryTests {
         authenticationRepository.save(authentication).subscribe();
 
         LOG.info("update password");
-        authenticationRepository.updatePassword("newpass", "Yakman").subscribe();
+        authenticationRepository.updatePassword("Yakman", "newpass").subscribe();
 
         authenticationRepository.findById("Yakman").as(StepVerifier::create)
                 .expectNextMatches(authentication1 -> {

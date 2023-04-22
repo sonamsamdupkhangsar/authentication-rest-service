@@ -1,9 +1,9 @@
 package me.sonam.authentication.handler;
 
-import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
-import me.sonam.security.util.HmacClient;
 import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
+import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
+import me.sonam.security.util.HmacClient;
 import me.sonam.security.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +52,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
     @Autowired
     private AuthenticationRepository authenticationRepository;
+
 
     @Autowired
     private HmacClient hmacClient;
@@ -115,12 +116,15 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         }
                         Map<String, Object> map = new HashMap<>();
                         map.put("userRole", "");
-                        String[] groupNames = {""};
-                        map.put("groupNames", groupNames);
+                        map.put("groupNames", "");
                         return Mono.just(map);
                     });
                 })
                 .flatMap(clientUserRole -> {
+                    LOG.info("clientUserRole: {}", clientUserRole);
+                    LOG.info("clientUserRole.userRole {}", clientUserRole.get("userRole"));
+                    LOG.info("clientUserRole.groupNames {}", clientUserRole.get("groupNames"));
+
                     final StringBuilder userJwtJson = new StringBuilder("{\n");
                     userJwtJson.append("  \"sub\": \"").append(authenticationPassword.getAuthenticationId()).append("\",\n")
                             .append("  \"scope\": \""+scope+"\",\n")
@@ -128,8 +132,8 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             .append("  \"aud\": \""+audience+"\",\n")
                             .append("  \"role\": \"").append(clientUserRole.get("userRole")).append("\",\n")
                             .append("  \"groups\": \"");
-                            List<String> groupNames = (ArrayList)clientUserRole.get("groupNames");;
-                            groupNames.forEach(s -> userJwtJson.append(s));
+                            final String groupNames = clientUserRole.get("groupNames").toString();
+                            userJwtJson.append(groupNames);
                             userJwtJson.append("\",\n")
                             .append("  \"expiresInSeconds\": "+expiresInSeconds+"\n")
                             .append("}\n");
@@ -205,10 +209,17 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .thenReturn("activated: "+authenticationId);
     }
 
+    /**
+     * this will be called by a non-logged in user, whcih will have a secret
+     * @param authenticationId
+     * @return
+     */
     @Override
-    public Mono<String> updatePassword(Mono<String> passwordMono, String authenticationId) {
-        return passwordMono.flatMap(password -> authenticationRepository.updatePassword(password, authenticationId))
-                .thenReturn("password updated");
+    public Mono<String> updatePassword(String authenticationId, String password) {
+        LOG.info("update password");
+        authenticationRepository.updatePassword(authenticationId, password)
+                .subscribe(integer -> LOG.info("row updated: {}", integer));
+        return Mono.just("password updated");
     }
 
     @Override
@@ -226,5 +237,4 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 })
                 .thenReturn("deleted: " + authenticationId);
     }
-
 }

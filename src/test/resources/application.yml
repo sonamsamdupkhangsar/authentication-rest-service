@@ -42,6 +42,8 @@ permitpath:
     httpMethods: POST
   - path: /authentications/activate/*
     httpMethods: PUT
+  - path: /authentications/noauth/password
+    httpMethods: PUT
 
 application-rest-service:
   root: http://localhost:{port}

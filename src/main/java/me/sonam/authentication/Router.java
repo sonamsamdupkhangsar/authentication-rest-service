@@ -1,21 +1,16 @@
 package me.sonam.authentication;
 
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import me.sonam.authentication.handler.AuthenticationHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springdoc.core.annotations.RouterOperation;
-import org.springdoc.core.annotations.RouterOperations;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
+
+import javax.print.attribute.standard.Media;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 
@@ -36,7 +31,9 @@ public class Router {
                 .andRoute(PUT("/authentications/activate/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
                         handler::activateAuthentication)
                 .andRoute(PUT("/authentications/password").and(accept(MediaType.APPLICATION_JSON)),
-                        handler::updatePassword)
+                        handler::updatePasswordForLoggedInUser)
+                .andRoute(PUT("/authentications/noauth/password").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::updatePasswordNoAuth)
                 .andRoute(DELETE("/authentications").and(accept(MediaType.APPLICATION_JSON)),
                         handler::delete);
     }

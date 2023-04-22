@@ -52,6 +52,8 @@ permitpath:
     httpMethods: POST
   - path: /authentications/activate/*
     httpMethods: PUT
+  - path: /authentications/noauth/password
+    httpMethods: PUT
 
 jwtrequest:
   - in:  /authentications/authenticate

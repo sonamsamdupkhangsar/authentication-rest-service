@@ -7,16 +7,13 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class AuthenticationHandler {
@@ -46,7 +43,7 @@ public class AuthenticationHandler {
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(getMap(Pair.of("message", "Authentication created successfully for authenticationId: "+s))))
                 .onErrorResume(throwable -> {
-                    LOG.error("create authentication failed", throwable);
+                    LOG.error("create authentication failed: {}", throwable.getMessage());
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(getMap(Pair.of("error", throwable.getMessage())));
                 });
@@ -62,18 +59,43 @@ public class AuthenticationHandler {
                                 .bodyValue(getMap(Pair.of("error", throwable.getMessage()))));
     }
 
-    public Mono<ServerResponse> updatePassword(ServerRequest serverRequest) {
-        LOG.info("create authentication");
+    public Mono<ServerResponse> updatePasswordForLoggedInUser(ServerRequest serverRequest) {
+        LOG.info("update password for logged-in user");
         String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        return authenticationService.updatePassword(serverRequest.bodyToMono(String.class), authenticationId)
-                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
+        return serverRequest.bodyToMono(Map.class).flatMap(map -> {
+            final String password = map.get("password").toString();
+            return updatePassword(authenticationId, password);
+        });
+
+    }
+
+    public Mono<ServerResponse> updatePasswordNoAuth(ServerRequest serverRequest) {
+        LOG.info("change password when user is not logged-in");
+
+        return serverRequest.bodyToMono(Map.class).flatMap(map -> {
+            final String authenticationId = map.get("authenticationId").toString();
+            final String password = map.get("password").toString();
+            return updatePassword(authenticationId, password);
+        });
+    }
+
+    private Mono<ServerResponse> updatePassword(String authenticationId, String password) {
+        LOG.info("calling service to update password");
+        return authenticationService.updatePassword(authenticationId, password)
+                .flatMap(s -> {
+                    LOG.info("returning serverReponse: {}", s);
+                    return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(getMap(Pair.of("message", "password updated")));
+                })
                 .onErrorResume(throwable -> {
-                    LOG.error("update password failed", throwable);
+                    LOG.error("password change failed: {}", throwable.getMessage());
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(getMap(Pair.of("error", throwable.getMessage())));
                 });
     }
+
+
 
     public Mono<ServerResponse> delete(ServerRequest serverRequest) {
         LOG.info("delete user");
@@ -83,13 +105,13 @@ public class AuthenticationHandler {
         return authenticationService.delete(authenticationId)
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(throwable -> {
-                    LOG.error("delete authentication failed", throwable);
+                    LOG.error("delete authentication failed: {}", throwable.getMessage());
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(getMap(Pair.of("error", throwable.getMessage())));
                 });
     }
 
-    private Map<String, String> getMap(Pair<String, String>... pairs){
+    public static Map<String, String> getMap(Pair<String, String>... pairs){
 
         Map<String, String> map = new HashMap<>();
 

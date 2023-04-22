@@ -22,7 +22,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
@@ -30,7 +32,9 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.FluxExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -165,7 +169,8 @@ public class AuthenticationEndpointMockWebServerTest {
         // first it will call send hmac to get accesstoken 'jwt/accesstoken'
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
-        final String clientRoleGroups = "{\"userRole\":\"user\",\"groupNames\":[\"admin1touser\",\"employee\"]}";
+        //groupNames=admin1touser, employee
+        final String clientRoleGroups = "{\"userRole\":\"user\",\"groupNames\":\"admin1touser\",\"employee\"}";
         // then return this for client role groups api call
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
         // then return this jwt token again when authentication api calls the jwt-rest-service to get the jwt token
@@ -422,6 +427,36 @@ public class AuthenticationEndpointMockWebServerTest {
 
 
     @Test
+    public void updateNotAuthenticatedPassword() {
+        Authentication authentication = new Authentication("user3", "yakpass",UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        final String authId = "user3";
+        Jwt jwt = jwt(authId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        Map<String, String> map = AuthenticationHandler.getMap(
+                Pair.of("authenticationId", "user3"),
+                Pair.of("password", "newPass"));
+        LOG.info("call authentication/password update");
+       webTestClient.put().uri("/authentications/noauth/password")
+                .bodyValue(map)
+                .headers(addJwt(jwt))
+                .headers(httpHeaders -> httpHeaders.setContentType(MediaType.APPLICATION_JSON))
+                .exchange().expectStatus().isOk()
+                .expectBody(Map.class)
+                .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
+
+        authenticationRepository.findById("user3").as(StepVerifier::create)
+                .expectNextMatches(authentication1 -> {
+                    LOG.info("password is newPass?  {}", authentication1.getPassword());
+                    return  authentication1.getPassword().equals("newPass");
+                })
+                .expectComplete().verify();
+    }
+
+    @Test
     public void updatePassword() {
         Authentication authentication = new Authentication("user3", "yakpass",UUID.randomUUID(),
                 UUID.randomUUID(), true, LocalDateTime.now(), true);
@@ -431,13 +466,16 @@ public class AuthenticationEndpointMockWebServerTest {
         Jwt jwt = jwt(authId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
+        Map<String, String> map = AuthenticationHandler.getMap(
+                Pair.of("password", "newPass"));
+
         LOG.info("call authentication/password update");
         webTestClient.put().uri("/authentications/password")
-
-                .bodyValue("newPass")
+                .bodyValue(map)
                 .headers(addJwt(jwt))
+                .headers(httpHeaders -> httpHeaders.setContentType(MediaType.APPLICATION_JSON))
                 .exchange().expectStatus().isOk()
-                .expectBody(String.class)
+                .expectBody(Map.class)
                 .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
 
         authenticationRepository.findById("user3").as(StepVerifier::create)
