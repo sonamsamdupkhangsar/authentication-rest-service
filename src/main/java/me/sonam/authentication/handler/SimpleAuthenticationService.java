@@ -1,9 +1,9 @@
 package me.sonam.authentication.handler;
 
-import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
-import me.sonam.security.util.HmacClient;
 import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
+import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
+import me.sonam.security.util.HmacClient;
 import me.sonam.security.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -21,7 +20,7 @@ import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.*;
 
-@Service
+
 public class SimpleAuthenticationService implements AuthenticationService {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleAuthenticationService.class);
 
@@ -51,10 +50,9 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private WebClient webClient;
-
     @Autowired
     private AuthenticationRepository authenticationRepository;
+
 
     @Autowired
     private HmacClient hmacClient;
@@ -62,10 +60,15 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
 
+    private WebClient.Builder webClientBuilder;
+
+    public SimpleAuthenticationService(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
+
     @PostConstruct
     public void setWebClient() {
-        LOG.info("built webclient");
-        webClient = WebClient.builder().filter(reactiveRequestContextHolder.headerFilter()).build();
+        webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
 
         LOG.info("clientId: {}, algorithm: {}, secretkey: {}", hmacClient.getClientId(),
                 hmacClient.getAlgorithm(), hmacClient.getSecretKey());
@@ -98,7 +101,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                  }).flatMap(authentication -> {
                      // this application endpoint does not require jwt or secuity for 'get'
                     LOG.info("application client role endpoint: {}", applicationClientRoleService);
-                    WebClient.ResponseSpec responseSpec = webClient.get().uri(
+                    WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(
                             applicationClientRoleService.replace("{clientId}", authenticationPassword.getClientId())
                                     .replace("{userId}", authentication.getUserId().toString()))
                             .retrieve();
@@ -113,13 +116,14 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         }
                         Map<String, Object> map = new HashMap<>();
                         map.put("userRole", "");
-                        String[] groupNames = {""};
-                        map.put("groupNames", groupNames);
+                        map.put("groupNames", "");
                         return Mono.just(map);
                     });
                 })
                 .flatMap(clientUserRole -> {
-
+                    LOG.info("clientUserRole: {}", clientUserRole);
+                    LOG.info("clientUserRole.userRole {}", clientUserRole.get("userRole"));
+                    LOG.info("clientUserRole.groupNames {}", clientUserRole.get("groupNames"));
 
                     final StringBuilder userJwtJson = new StringBuilder("{\n");
                     userJwtJson.append("  \"sub\": \"").append(authenticationPassword.getAuthenticationId()).append("\",\n")
@@ -128,8 +132,8 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             .append("  \"aud\": \""+audience+"\",\n")
                             .append("  \"role\": \"").append(clientUserRole.get("userRole")).append("\",\n")
                             .append("  \"groups\": \"");
-                            String[] groupNames = (String[])clientUserRole.get("groupNames");;
-                            Arrays.stream(groupNames).forEach(s -> userJwtJson.append(s));
+                            final String groupNames = clientUserRole.get("groupNames").toString();
+                            userJwtJson.append(groupNames);
                             userJwtJson.append("\",\n")
                             .append("  \"expiresInSeconds\": "+expiresInSeconds+"\n")
                             .append("}\n");
@@ -150,7 +154,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
                     final String hmac = Util.getHmac(hmacClient.getAlgorithm(), jsonString.toString(), hmacClient.getSecretKey());
                     LOG.info("creating hmac for jwt-rest-service: {}", jwtServiceEndpoint);
-                    WebClient.ResponseSpec responseSpec = webClient.post().uri(jwtServiceEndpoint)
+                    WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(jwtServiceEndpoint)
                             .headers(httpHeaders -> httpHeaders.add(HttpHeaders.AUTHORIZATION, hmac))
                             .bodyValue(jsonString)
                             .accept(MediaType.APPLICATION_JSON)
@@ -205,10 +209,17 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .thenReturn("activated: "+authenticationId);
     }
 
+    /**
+     * this will be called by a non-logged in user, whcih will have a secret
+     * @param authenticationId
+     * @return
+     */
     @Override
-    public Mono<String> updatePassword(Mono<String> passwordMono, String authenticationId) {
-        return passwordMono.flatMap(password -> authenticationRepository.updatePassword(password, authenticationId))
-                .thenReturn("password updated");
+    public Mono<String> updatePassword(String authenticationId, String password) {
+        LOG.info("update password");
+        authenticationRepository.updatePassword(authenticationId, password)
+                .subscribe(integer -> LOG.info("row updated: {}", integer));
+        return Mono.just("password updated");
     }
 
     @Override
@@ -226,5 +237,4 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 })
                 .thenReturn("deleted: " + authenticationId);
     }
-
 }

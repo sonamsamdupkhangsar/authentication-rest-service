@@ -24,7 +24,7 @@ public class PermitPathLivenessCheck {
 
     @Test
     public void liveness() {
-          EntityExchangeResult<String> entityExchangeResult = webTestClient.get().uri("/api/health/liveness")
+          EntityExchangeResult<String> entityExchangeResult = webTestClient.get().uri("/authentications/api/health/liveness")
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class).returnResult();
 

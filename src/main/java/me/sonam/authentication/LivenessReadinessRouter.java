@@ -22,9 +22,9 @@ public class LivenessReadinessRouter {
     @Bean("livenessRouter")
     public RouterFunction<ServerResponse> route(LivenessReadinessHandler livenessReadinessHandler) {
         LOG.info("building email router function");
-        return RouterFunctions.route(GET("/api/health/liveness").and(accept(MediaType.APPLICATION_JSON)),
+        return RouterFunctions.route(GET("/authentications/api/health/liveness").and(accept(MediaType.APPLICATION_JSON)),
                 livenessReadinessHandler::liveness)
-                .andRoute(GET("/api/health/readiness").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(GET("/authentications/api/health/readiness").and(accept(MediaType.APPLICATION_JSON)),
                         livenessReadinessHandler::readiness);
     }
 }

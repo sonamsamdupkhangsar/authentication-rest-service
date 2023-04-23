@@ -86,9 +86,11 @@ envs:
   - name: EUREKA_HOST
     value: discovery-service.sonam.cloud
   - name: JWT_REST_SERVICE
-    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://jwt-rest-service
   - name: APPLICATION_REST_SERVICE
-    value: http://application-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://application-rest-service
+  - name:  ACCOUNT_REST_SERVICE
+    value: http://account-rest-service
   - name: JWT_USER_AUDIENCE
     value: https://sonam.cloud
   - name: JWT_USER_SCOPE
@@ -101,13 +103,13 @@ envs:
 
 health:
   liveness:
-    path: /api/health/liveness
+    path: /authentications/api/health/liveness
     port: 8080
     initialDelaySeconds: 5
     periodSeconds: 5
     failureThreshold: 5
   readiness:
-    path: /api/health/readiness
+    path: /authentications/eyapi/health/readiness
     port: 8080
     initialDelaySeconds: 5
     periodSeconds: 5

@@ -19,6 +19,8 @@ server:
   port: 9001
 
 spring:
+  profiles:
+    active: localdevtest
   r2dbc:
     url: r2dbc:h2:mem:///contentitem?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     name: sa
@@ -34,11 +36,13 @@ scope: backend
 expiresInSeconds: 86400
 
 permitpath:
-  - path: /api/health/*
+  - path: /authentications/api/health/*
   - path: /authentications/authenticate
   - path: /authentications
     httpMethods: POST
   - path: /authentications/activate/*
+    httpMethods: PUT
+  - path: /authentications/noauth/password
     httpMethods: PUT
 
 application-rest-service:
