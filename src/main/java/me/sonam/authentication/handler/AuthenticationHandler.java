@@ -19,8 +19,10 @@ import java.util.Map;
 public class AuthenticationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationHandler.class);
 
-    @Autowired
     private AuthenticationService authenticationService;
+    public AuthenticationHandler(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
 
     public Mono<ServerResponse> authenticate(ServerRequest serverRequest) {
         LOG.info("authenticate user");
@@ -114,6 +116,7 @@ public class AuthenticationHandler {
                 );
     }
 
+    @SafeVarargs
     public static Map<String, String> getMap(Pair<String, String>... pairs){
 
         Map<String, String> map = new HashMap<>();

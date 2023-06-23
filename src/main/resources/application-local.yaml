@@ -18,15 +18,5 @@ eureka:
 
 DEFAULT_ZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 
-audience: https://sonam.cloud
-scope: backend
-expiresInSeconds: 86400
-
-# jwt-rest-service on port 8081 local server
-JWT_REST_SERVICE: http://jwt-rest-service
 APPLICATION_REST_SERVICE: http://application-rest-service
 ACCOUNT_REST_SERVICE: http://account-rest-service
-
-HMAC_CLIENTID: authentication-rest-service
-HMAC_ALGORITHM: HmacMD5
-HMAC_SECRET: mysecret
