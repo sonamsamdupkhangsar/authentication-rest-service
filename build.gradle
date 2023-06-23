@@ -94,7 +94,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/sonamsamdupkhangsar/account-rest-service"
+            url = "https://maven.pkg.github.com/sonamsamdupkhangsar/authentication-rest-service"
             credentials {
                 username = System.getenv("USERNAME")
                 password = System.getenv("PERSONAL_ACCESS_TOKEN")
