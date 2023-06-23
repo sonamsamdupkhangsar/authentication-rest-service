@@ -1,24 +1,18 @@
 package me.sonam.authentication.handler;
 
+import jakarta.annotation.PostConstruct;
 import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
 import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
-import me.sonam.security.util.HmacClient;
-import me.sonam.security.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
-import java.util.*;
 
 
 public class SimpleAuthenticationService implements AuthenticationService {
@@ -53,10 +47,6 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Autowired
     private AuthenticationRepository authenticationRepository;
 
-
-    @Autowired
-    private HmacClient hmacClient;
-
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
 
@@ -69,9 +59,6 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @PostConstruct
     public void setWebClient() {
         webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
-
-        LOG.info("clientId: {}, algorithm: {}, secretkey: {}", hmacClient.getClientId(),
-                hmacClient.getAlgorithm(), hmacClient.getSecretKey());
     }
 
     @Override
@@ -82,23 +69,25 @@ public class SimpleAuthenticationService implements AuthenticationService {
          */
         return authenticationPasswordMono.flatMap(authenticationPassword ->
                 authenticationRepository.existsById(authenticationPassword.getAuthenticationId())
-                .filter(aBoolean -> aBoolean)
-                .switchIfEmpty(Mono.error(new AuthenticationException("authentication does not exist with authId")))
-                .flatMap(aBoolean -> authenticationRepository.existsByAuthenticationIdAndActiveTrue(authenticationPassword.getAuthenticationId()))
-                .doOnNext(aBoolean -> LOG.info("aboolean is {}", aBoolean))
-                .filter(aBoolean -> aBoolean)
-                .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
-                 .flatMap(aBoolean -> authenticationRepository.findById(authenticationPassword.getAuthenticationId()))
+                        .filter(aBoolean -> aBoolean)
+                        .switchIfEmpty(Mono.error(new AuthenticationException("authentication does not exist with authId")))
+                        .flatMap(aBoolean -> authenticationRepository.existsByAuthenticationIdAndActiveTrue(authenticationPassword.getAuthenticationId()))
+                        .doOnNext(aBoolean -> LOG.info("aboolean is {}", aBoolean))
+                        .filter(aBoolean -> aBoolean)
+                        .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
+                        .flatMap(aBoolean -> authenticationRepository.findById(authenticationPassword.getAuthenticationId()))
+                        .flatMap(authentication -> {
+                            if (passwordEncoder.matches(authenticationPassword.getPassword(), authentication.getPassword())) {
+                                LOG.info("username and password matched");
+                                return Mono.just("username and password matched");
+                            } else {
+                                return Mono.error(new AuthenticationException("no authentication found with username and password"));
+                            }
+                        }));
+    }
 
-                 .flatMap( authentication -> {
-                     if (passwordEncoder.matches(authenticationPassword.getPassword(), authentication.getPassword())) {
-                         return Mono.just(authentication);
-                     }
-                     else {
-                         return Mono.error(
-                                 new AuthenticationException("no authentication found with username and password"));
-                     }
-                 }).flatMap(authentication -> {
+/*
+                .flatMap(authentication -> {
                      // this application endpoint does not require jwt or secuity for 'get'
                     LOG.info("application client role endpoint: {}", applicationClientRoleService);
                     WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(
@@ -121,6 +110,12 @@ public class SimpleAuthenticationService implements AuthenticationService {
                     });
                 })
                 .flatMap(clientUserRole -> {
+                    // this step sends in a Hmac that contains this application's algorithm, secretKey, and a json
+                    // to jwt-rest-service to validate the request is coming from a verified cliend for getting a
+                    // jwt token
+
+                    // since we don't have the jwt-rest-service anymore, make a request to the authorization server
+
                     LOG.info("clientUserRole: {}", clientUserRole);
                     LOG.info("clientUserRole.userRole {}", clientUserRole.get("userRole"));
                     LOG.info("clientUserRole.groupNames {}", clientUserRole.get("groupNames"));
@@ -154,6 +149,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
                     final String hmac = Util.getHmac(hmacClient.getAlgorithm(), jsonString.toString(), hmacClient.getSecretKey());
                     LOG.info("creating hmac for jwt-rest-service: {}", jwtServiceEndpoint);
+
                     WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(jwtServiceEndpoint)
                             .headers(httpHeaders -> httpHeaders.add(HttpHeaders.AUTHORIZATION, hmac))
                             .bodyValue(jsonString)
@@ -175,7 +171,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                                 }
                             });
                 }));
-    }
+    }*/
 
     @Override
     public Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono) {

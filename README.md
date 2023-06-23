@@ -30,7 +30,9 @@ mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8083 --jwt.issuer
 Build docker image using included Dockerfile.
 
 
-`docker build -t imageregistry/project-rest-service:1.0 .` 
+```
+docker build --secret id=USERNAME,src=USERNAME --secret id=PERSONAL_ACCESS_TOKEN,src=PERSONAL_ACCESS_TOKEN . -t sonam/authentication-rest-service
+```
 
 ## Push Docker image to repository
 
@@ -43,6 +45,8 @@ docker run -e POSTGRES_USERNAME=test \
   -e POSTGRES_PASSWORD=test -e POSTGRES_DBNAME=authentication \
   -e POSTGRES_SERVICE=localhost:5432 \
  --publish 8082:8080 imageregistry/authentication-rest-service:1.0
+ 
+  docker run  -e --spring.profiles.active=local -p 9001:9001 -t sonamsamdupkhangsar/auth-server 
 ```
 
 

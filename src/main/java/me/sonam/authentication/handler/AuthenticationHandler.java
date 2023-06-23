@@ -5,13 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,8 +19,10 @@ import java.util.Map;
 public class AuthenticationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationHandler.class);
 
-    @Autowired
     private AuthenticationService authenticationService;
+    public AuthenticationHandler(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
+    }
 
     public Mono<ServerResponse> authenticate(ServerRequest serverRequest) {
         LOG.info("authenticate user");
@@ -61,12 +63,12 @@ public class AuthenticationHandler {
 
     public Mono<ServerResponse> updatePasswordForLoggedInUser(ServerRequest serverRequest) {
         LOG.info("update password for logged-in user");
-        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        return serverRequest.bodyToMono(Map.class).flatMap(map -> {
-            final String password = map.get("password").toString();
-            return updatePassword(authenticationId, password);
-        });
+        return serverRequest.principal().flatMap(principal ->
+            serverRequest.bodyToMono(Map.class).flatMap(map -> {
+                final String password = map.get("password").toString();
+                return updatePassword(principal.getName(), password);
+            }));
 
     }
 
@@ -99,18 +101,22 @@ public class AuthenticationHandler {
 
     public Mono<ServerResponse> delete(ServerRequest serverRequest) {
         LOG.info("delete user");
-        LOG.info("auth: {}", SecurityContextHolder.getContext().getAuthentication());
-        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        return authenticationService.delete(authenticationId)
-                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
-                .onErrorResume(throwable -> {
-                    LOG.error("delete authentication failed: {}", throwable.getMessage());
-                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(getMap(Pair.of("error", throwable.getMessage())));
-                });
+        return serverRequest.principal()
+                .map(Principal::getName)
+                .flatMap(username ->
+            authenticationService.delete(username)
+                    .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(getMap(Pair.of("message", s))))
+                    .onErrorResume(throwable -> {
+                        LOG.error("delete authentication failed: {}", throwable.getMessage());
+                        return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(getMap(Pair.of("error", throwable.getMessage())));
+                    })
+                );
     }
 
+    @SafeVarargs
     public static Map<String, String> getMap(Pair<String, String>... pairs){
 
         Map<String, String> map = new HashMap<>();

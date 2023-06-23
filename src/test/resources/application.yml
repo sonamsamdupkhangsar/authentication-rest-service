@@ -25,6 +25,11 @@ spring:
     url: r2dbc:h2:mem:///contentitem?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     name: sa
     password:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9001
 
 POSTGRES_USERNAME: dusername
 POSTGRES_DBNAME: dbname
@@ -66,4 +71,7 @@ hmacKey:
 jwtrequest:
   - in:  /authentications/authenticate
     out: /applications/clients/(.)*/users/(.)*
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
