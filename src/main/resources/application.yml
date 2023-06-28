@@ -40,15 +40,6 @@ application-rest-service:
   root: ${APPLICATION_REST_SERVICE}
   client-role: /applications/clients/{clientId}/users/{userId}
 
-jwt-service:
-  root: ${JWT_REST_SERVICE}
-  public-key-id: /jwts/publickeys/{keyId}
-  accesstoken: /jwts/accesstoken
-
-audience: ${JWT_USER_AUDIENCE}
-scope: ${JWT_USER_SCOPE}
-expiresInSeconds: ${JWT_USER_EXPIRES_IN_SECONDS}
-
 permitpath:
   - path: /authentications/api/health/*
   - path: /authentications/authenticate
@@ -62,9 +53,7 @@ permitpath:
 jwtrequest:
   - in:  /authentications/authenticate
     out: /applications/clients/(.)*/users/(.)*
-    jwt: request
-
-hmacKey:
-  clientId: ${HMAC_CLIENTID}
-  algorithm: ${HMAC_ALGORITHM}
-  secretKey: ${HMAC_SECRET}
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==

@@ -29,18 +29,6 @@ public class SimpleAuthenticationService implements AuthenticationService {
     @Value("${application-rest-service.root}${application-rest-service.client-role}")
     private String applicationClientRoleService;
 
-    @Value("${jwt-service.root}${jwt-service.accesstoken}")
-    private String jwtServiceEndpoint;
-
-    @Value("${audience}")
-    private String audience;
-
-    @Value("${scope}")
-    private String scope;
-
-    @Value("${expiresInSeconds}")
-    private int expiresInSeconds;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
