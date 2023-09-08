@@ -10,9 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class SimpleAuthenticationService implements AuthenticationService {
@@ -26,8 +29,8 @@ public class SimpleAuthenticationService implements AuthenticationService {
      * @return
      */
 
-    @Value("${application-rest-service.root}${application-rest-service.client-role}")
-    private String applicationClientRoleService;
+    @Value("${role-rest-service.root}${role-rest-service.user-role}")
+    private String roleEp;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -50,7 +53,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public Mono<String> authenticate(Mono<AuthenticationPassword> authenticationPasswordMono) {
+    public Mono<Map<String, ?>> authenticate(Mono<AuthenticationPassword> authenticationPasswordMono) {
         /**
          *  .map(authentication -> !authentication.getActive())
          *                 .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
@@ -66,37 +69,17 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         .flatMap(aBoolean -> authenticationRepository.findById(authenticationPassword.getAuthenticationId()))
                         .flatMap(authentication -> {
                             if (passwordEncoder.matches(authenticationPassword.getPassword(), authentication.getPassword())) {
-                                LOG.info("username and password matched");
-                                return Mono.just("username and password matched");
-                            } else {
-                                return Mono.error(new AuthenticationException("no authentication found with username and password"));
+                                return Mono.just(authentication);
                             }
-                        }));
+                            return Mono.error(new AuthenticationException("no authentication found with username and password"));
+                        })
+                        //.switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username and password")))
+
+                        .flatMap(authentication -> getUserRoleForClientId(authentication.getUserId().toString(),
+                                authenticationPassword.getClientId())));
     }
 
-/*
-                .flatMap(authentication -> {
-                     // this application endpoint does not require jwt or secuity for 'get'
-                    LOG.info("application client role endpoint: {}", applicationClientRoleService);
-                    WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(
-                            applicationClientRoleService.replace("{clientId}", authenticationPassword.getClientId())
-                                    .replace("{userId}", authentication.getUserId().toString()))
-                            .retrieve();
-                    return responseSpec.bodyToMono(Map.class).map(clientUserRole -> {
-                        LOG.info("got role: {}", clientUserRole);
-                        return clientUserRole;
-                    }).onErrorResume(throwable -> {
-                        LOG.error("application rest call failed: {}", throwable.getMessage());
-                        if (throwable instanceof WebClientResponseException) {
-                            WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
-                            LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
-                        }
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("userRole", "");
-                        map.put("groupNames", "");
-                        return Mono.just(map);
-                    });
-                })
+                /*
                 .flatMap(clientUserRole -> {
                     // this step sends in a Hmac that contains this application's algorithm, secretKey, and a json
                     // to jwt-rest-service to validate the request is coming from a verified cliend for getting a
@@ -221,4 +204,31 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 })
                 .thenReturn("deleted: " + authenticationId);
     }
+
+    private Mono<Map<String, ?>> getUserRoleForClientId(String userId, String clientId) {
+            LOG.info("role endpoint: {}", roleEp);
+            WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(
+                            roleEp.replace("{clientId}", clientId)
+                                    .replace("{userId}", userId))
+                    .retrieve();
+            return responseSpec.bodyToMono(Map.class).map(map -> {
+                LOG.info("got role: {}", map);
+
+                if (map.get("roleName") != null) {
+                    LOG.info("got role: {}", map.get("roleName"));
+                    return Map.of("roleName", map.get("roleName"));
+                }
+                else {
+                    return Map.of("roleName", "");
+                }
+            }).onErrorResume(throwable -> {
+                LOG.error("role  rest call failed: {}", throwable.getMessage());
+                if (throwable instanceof WebClientResponseException) {
+                    WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                    LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+                }
+
+                return Mono.just(Map.of("roleName", ""));
+            });
+        }
 }

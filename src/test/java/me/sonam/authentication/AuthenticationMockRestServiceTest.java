@@ -18,6 +18,7 @@ import org.springframework.web.reactive.function.server.*;
 import org.springframework.web.reactive.function.server.support.ServerRequestWrapper;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,7 +57,7 @@ public class AuthenticationMockRestServiceTest {
 
     @Test
     public void authenticate() {
-        when(service.authenticate(Mockito.any())).thenReturn(Mono.just("jwtKey"));
+        when(service.authenticate(Mockito.any())).thenReturn(Mono.just(Map.of("roleName", "user")));
 
         assertThat(webTestClient).isNotNull();
 

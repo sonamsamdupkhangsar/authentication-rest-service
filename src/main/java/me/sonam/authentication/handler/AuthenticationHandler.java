@@ -29,7 +29,10 @@ public class AuthenticationHandler {
 
         return authenticationService.authenticate(serverRequest.bodyToMono(AuthenticationPassword.class))
                 .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(getMap(Pair.of("message", "Authentication successful"), Pair.of("token", s))))
+                        .bodyValue(getMap(
+                                Pair.of("message", "Authentication successful"),
+                                Pair.of("roleName", s.get("roleName").toString())
+                        )))
                 .onErrorResume(throwable -> {
                     LOG.error("authenticate failed, message: {}", throwable.getMessage());
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)

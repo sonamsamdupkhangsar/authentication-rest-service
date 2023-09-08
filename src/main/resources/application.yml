@@ -36,9 +36,9 @@ eureka:
     serviceUrl:
       defaultZone: ${DEFAULT_ZONE}
 
-application-rest-service:
-  root: ${APPLICATION_REST_SERVICE}
-  client-role: /applications/clients/{clientId}/users/{userId}
+role-rest-service:
+  root: ${ROLE_REST_SERVICE}
+  user-role: /roles/clientId/{clientId}/users/{userId}
 
 auth-server:
   root: http://authorization-server
@@ -58,7 +58,7 @@ permitpath:
 
 jwtrequest:
   - in:  /authentications/authenticate
-    out: /applications/clients/(.)*/users/(.)*
+    out: /roles/clientId/(.)*/users/(.)*
     accessToken:
       option: request
       scopes: message.read message.write

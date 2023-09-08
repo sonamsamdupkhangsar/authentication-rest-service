@@ -50,28 +50,24 @@ permitpath:
   - path: /authentications/noauth/password
     httpMethods: PUT
 
-application-rest-service:
+role-rest-service:
   root: http://localhost:{port}
-  client-role: /applications/clients/{clientId}/users/{userId}
-
-jwt-service:
-  root: http://localhost:{port}
-  public-key-id: /jwts/publickeys/{keyId}
-  accesstoken: /jwts/accesstoken
+  user-role: /roles/clientId/{clientId}/users/{userId}
 
 eureka:
   client:
     enabled: false
 
-hmacKey:
-  clientId: authentication-rest-service
-  algorithm: HmacMD5
-  secretKey: mysecret
-
 jwtrequest:
   - in:  /authentications/authenticate
-    out: /applications/clients/(.)*/users/(.)*
+    out: /roles/clientId/(.)*/users/(.)*
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+
+auth-server:
+  root: http://localhost:9001
+  oauth2token:
+    path: /oauth2/token
+    params: ?grant_type=client_credentials
