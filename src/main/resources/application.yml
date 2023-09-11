@@ -30,24 +30,21 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://authorization-server
+          issuer-uri: ${ISSUER_URL}
 eureka:
   client:
     serviceUrl:
       defaultZone: ${DEFAULT_ZONE}
 
-application-rest-service:
-  root: ${APPLICATION_REST_SERVICE}
-  client-role: /applications/clients/{clientId}/users/{userId}
+role-rest-service:
+  root: ${ROLE_REST_SERVICE}
+  user-role: /roles/clientId/{clientId}/users/{userId}
 
-jwt-service:
-  root: ${JWT_REST_SERVICE}
-  public-key-id: /jwts/publickeys/{keyId}
-  accesstoken: /jwts/accesstoken
-
-audience: ${JWT_USER_AUDIENCE}
-scope: ${JWT_USER_SCOPE}
-expiresInSeconds: ${JWT_USER_EXPIRES_IN_SECONDS}
+auth-server:
+  root: http://authorization-server
+  oauth2token:
+    path: /oauth2/token
+    params: ?grant_type=client_credentials
 
 permitpath:
   - path: /authentications/api/health/*
@@ -61,10 +58,12 @@ permitpath:
 
 jwtrequest:
   - in:  /authentications/authenticate
-    out: /applications/clients/(.)*/users/(.)*
-    jwt: request
+    out: /roles/clientId/(.)*/users/(.)*
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
 
-hmacKey:
-  clientId: ${HMAC_CLIENTID}
-  algorithm: ${HMAC_ALGORITHM}
-  secretKey: ${HMAC_SECRET}
+token:
+  audiences: ${OAUTH_CLIENTS}
+  issuerUri: ${ISSUER_URL}

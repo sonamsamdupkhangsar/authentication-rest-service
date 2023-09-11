@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -32,9 +31,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
-import org.springframework.test.web.reactive.server.FluxExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -113,9 +110,8 @@ public class AuthenticationEndpointMockWebServerTest {
      */
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry r) throws IOException {
-        r.add("jwt-service.root", () -> "http://localhost:"+mockWebServer.getPort());
-        r.add("application-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
-        LOG.info("updated jwt-service and application-rest-service.root properties");
+        r.add("role-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+        r.add("auth-server.root", () -> "http://localhost:"+mockWebServer.getPort());
     }
 
     @Test
@@ -167,12 +163,12 @@ public class AuthenticationEndpointMockWebServerTest {
         final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
         final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
         // first it will call send hmac to get accesstoken 'jwt/accesstoken'
-     //   mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
         //groupNames=admin1touser, employee
-        final String clientRoleGroups = "{\"userRole\":\"user\",\"groupNames\":\"admin1touser\",\"employee\"}";
+        final String clientRoleGroups = "{\"roleName\":\"user\"}";
         // then return this for client role groups api call
-       // mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
         // then return this jwt token again when authentication api calls the jwt-rest-service to get the jwt token
       //  mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
@@ -187,14 +183,15 @@ public class AuthenticationEndpointMockWebServerTest {
         assertThat(result.getResponseBody()).isNotEmpty();
         LOG.info("start taking request now");
 
-     /*   RecordedRequest request = mockWebServer.takeRequest();
+        RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
-        assertThat(request.getPath()).startsWith("/applications/clients");
+        assertThat(request.getPath()).startsWith("/roles/clientId/");
 
+        /*
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
         assertThat(request.getPath()).startsWith("/jwts/accesstoken");
@@ -267,11 +264,11 @@ public class AuthenticationEndpointMockWebServerTest {
         final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
         final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
         // this is for returning a jwt token on hmac generation
-        //mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
-        final String clientRoleGroups = "{\"userRole\":\"user\",\"groupNames\":[\"admin1touser\",\"employee\"]}";
-        // return this response for role groups for clients call
-       // mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
+        final String userRole = "{\"roleName\":\"user\"}";
+        // return this response for role
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(userRole));
         // this is for generating the jwt token when jwt-rest-service is called at /jwt/accesstoken
        // mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
@@ -283,12 +280,17 @@ public class AuthenticationEndpointMockWebServerTest {
 
         assertThat(result.getResponseBody()).isNotEmpty();
 
-        LOG.info("start taking request now: {}", result.getResponseBody());
-       /*RecordedRequest request = mockWebServer.takeRequest();
+        LOG.info("take oauth2 token request first: {}", result.getResponseBody());
+        RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
+        LOG.info("then take the roles request");
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("GET");
+        assertThat(request.getPath()).startsWith("/roles/clientId/");
 
+/*
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
         assertThat(request.getPath()).startsWith("/applications/clients");
