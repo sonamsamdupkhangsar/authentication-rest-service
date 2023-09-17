@@ -166,7 +166,7 @@ public class AuthenticationEndpointMockWebServerTest {
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
         //groupNames=admin1touser, employee
-        final String clientRoleGroups = "{\"roleName\":\"user\"}";
+        final String clientRoleGroups = "[{\"roleName\":\"user\"}]";
         // then return this for client role groups api call
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
         // then return this jwt token again when authentication api calls the jwt-rest-service to get the jwt token

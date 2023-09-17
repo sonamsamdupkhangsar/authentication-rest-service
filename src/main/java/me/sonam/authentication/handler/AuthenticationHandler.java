@@ -28,11 +28,12 @@ public class AuthenticationHandler {
         LOG.info("authenticate user");
 
         return authenticationService.authenticate(serverRequest.bodyToMono(AuthenticationPassword.class))
-                .flatMap(s -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(getMap(
-                                Pair.of("message", "Authentication successful"),
-                                Pair.of("roleName", s.get("roleName").toString())
-                        )))
+                .flatMap(s -> {
+                    LOG.info("s contains: {}", s);
+                    return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(Map.of("message", "Authentication successful",
+                                "roleNames", s));
+                })
                 .onErrorResume(throwable -> {
                     LOG.error("authenticate failed, message: {}", throwable.getMessage());
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)

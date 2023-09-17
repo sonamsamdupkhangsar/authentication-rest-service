@@ -2,6 +2,7 @@ package me.sonam.authentication.handler;
 
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -12,7 +13,7 @@ public interface AuthenticationService {
      * @return
      */
     // no jwt required
-    Mono<Map<String, ?>> authenticate(Mono<AuthenticationPassword> authTransferMono);
+    Mono<List<String>> authenticate(Mono<AuthenticationPassword> authTransferMono);
     // no jwt required
     Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono);
     // internal

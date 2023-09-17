@@ -18,6 +18,7 @@ import org.springframework.web.reactive.function.server.*;
 import org.springframework.web.reactive.function.server.support.ServerRequestWrapper;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -57,7 +58,7 @@ public class AuthenticationMockRestServiceTest {
 
     @Test
     public void authenticate() {
-        when(service.authenticate(Mockito.any())).thenReturn(Mono.just(Map.of("roleName", "user")));
+        when(service.authenticate(Mockito.any())).thenReturn(Mono.just(List.of( "user")));
 
         assertThat(webTestClient).isNotNull();
 

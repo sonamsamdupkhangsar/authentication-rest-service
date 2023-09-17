@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -53,7 +54,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public Mono<Map<String, ?>> authenticate(Mono<AuthenticationPassword> authenticationPasswordMono) {
+    public Mono<List<String>> authenticate(Mono<AuthenticationPassword> authenticationPasswordMono) {
         /**
          *  .map(authentication -> !authentication.getActive())
          *                 .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
@@ -75,8 +76,13 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         })
                         //.switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username and password")))
 
-                        .flatMap(authentication -> getUserRoleForClientId(authentication.getUserId().toString(),
-                                authenticationPassword.getClientId())));
+                        .flatMap(authentication -> getUserRolesForClientId(authentication.getUserId().toString(),
+                                authenticationPassword.getClientId()))
+
+                        .flatMap(stringMap -> {
+                            LOG.info("map contains {}", stringMap);
+                            return Mono.just(stringMap);
+                        }));
     }
 
                 /*
@@ -231,4 +237,54 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 return Mono.just(Map.of("roleName", ""));
             });
         }
+
+
+    private Mono<List<String>> getUserRolesForClientId(String userId, String clientId) {
+        LOG.info("role endpoint: {}", roleEp);
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(
+                        roleEp.replace("{clientId}", clientId)
+                                .replace("{userId}", userId))
+                .retrieve();
+
+        return responseSpec.bodyToFlux(Map.class).flatMap(map -> {
+            if (map.get("roleName") != null) {
+                LOG.info("got role: {}", map.get("roleName"));
+                //return Mono.just(Map.of("roleName", map.get("roleName")));
+                return Mono.just(map.get("roleName").toString());
+            }
+            else {
+                //return Mono.just(Map.of("roleName", ""));
+                return Mono.just("");
+            }
+        }).collectList()
+                .onErrorResume(throwable -> {
+                    LOG.error("role  rest call failed: {}", throwable.getMessage());
+                    if (throwable instanceof WebClientResponseException) {
+                        WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                        LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+                    }
+
+                    return Mono.just(List.of(""));
+                });
+      /*
+        return responseSpec.bodyToFlux(Map.class).map(map -> {
+            LOG.info("got role: {}", map);
+
+            if (map.get("roleName") != null) {
+                LOG.info("got role: {}", map.get("roleName"));
+                return Map.of("roleName", map.get("roleName"));
+            }
+            else {
+                return Map.of("roleName", "");
+            }
+        }).onErrorResume(throwable -> {
+            LOG.error("role  rest call failed: {}", throwable.getMessage());
+            if (throwable instanceof WebClientResponseException) {
+                WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+            }
+
+            return Mono.just(Map.of("roleName", ""));
+        });*/
+    }
 }
