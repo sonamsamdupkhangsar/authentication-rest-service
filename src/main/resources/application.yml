@@ -41,7 +41,7 @@ role-rest-service:
   user-role: /roles/clientId/{clientId}/users/{userId}
 
 auth-server:
-  root: http://authorization-server
+  root: http://authorization-server/issuer
   oauth2token:
     path: /oauth2/token
     params: ?grant_type=client_credentials
