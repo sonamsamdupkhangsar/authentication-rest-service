@@ -85,20 +85,14 @@ envs:
     value: REQUIRE
   - name: EUREKA_HOST
     value: discovery-service.sonam.cloud
-  - name: JWT_REST_SERVICE
-    value: http://jwt-rest-service
+  - name: DEFAULT_ZONE
+    value: https://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
   - name: APPLICATION_REST_SERVICE
     value: http://application-rest-service
   - name:  ACCOUNT_REST_SERVICE
     value: http://account-rest-service
-  - name: JWT_USER_AUDIENCE
-    value: https://sonam.cloud
-  - name: JWT_USER_SCOPE
-    value: backend
-  - name: JWT_USER_EXPIRES_IN_SECONDS
-    value: 86400
-  - name: DEFAULT_ZONE
-    value: https://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
+  - name: ROLE_REST_SERVICE
+    value: http://role-rest-service
   - name: ISSUER_URL
     value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_CLIENTS
