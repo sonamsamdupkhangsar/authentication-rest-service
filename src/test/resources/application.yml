@@ -69,4 +69,4 @@ auth-server:
 
 token:
   audiences: oauth-client
-  issuerUri: http://api-gateway:9001/issuer
+  issuerUri: http://nonexist:9001/issuer

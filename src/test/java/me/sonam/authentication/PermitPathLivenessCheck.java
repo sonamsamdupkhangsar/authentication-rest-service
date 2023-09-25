@@ -28,6 +28,8 @@ public class PermitPathLivenessCheck {
     @Autowired
     private WebTestClient webTestClient;
 
+    @MockBean
+    private ReactiveJwtDecoder jwtDecoder;
 
     @Test
     public void liveness() {
@@ -35,7 +37,7 @@ public class PermitPathLivenessCheck {
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class).returnResult();
 
-        entityExchangeResult = webTestClient.get().uri("/authentications/api/health/readiness")
+        entityExchangeResult = webTestClient.get().uri("/authentications/api/health/liveness")
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class).returnResult();
 
