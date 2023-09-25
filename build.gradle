@@ -75,10 +75,10 @@ tasks.named('test', Test) {
 test {
     filter {
         //include all tests from package
-        includeTestsMatching "me.sonam.authentication"
+        includeTestsMatching "me.sonam.authentication.*"
 
         //include all integration tests
-        includeTestsMatching "*Test*"
+        includeTestsMatching "*"
     }
 }
 

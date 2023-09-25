@@ -25,11 +25,6 @@ spring:
     url: r2dbc:h2:mem:///contentitem?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     name: sa
     password:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:9001
 
 POSTGRES_USERNAME: dusername
 POSTGRES_DBNAME: dbname
@@ -74,4 +69,4 @@ auth-server:
 
 token:
   audiences: oauth-client
-  issuerUri: http://my-server:9001s
+  issuerUri: http://api-gateway:9001/issuer

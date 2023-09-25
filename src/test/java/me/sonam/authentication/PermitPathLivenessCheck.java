@@ -17,6 +17,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 @EnableAutoConfiguration
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes=Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -25,8 +27,7 @@ public class PermitPathLivenessCheck {
     private static final Logger LOG = LoggerFactory.getLogger(PermitPathLivenessCheck.class);
     @Autowired
     private WebTestClient webTestClient;
-    @MockBean
-    private ReactiveJwtDecoder jwtDecoder;
+
 
     @Test
     public void liveness() {
@@ -34,7 +35,12 @@ public class PermitPathLivenessCheck {
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class).returnResult();
 
+        entityExchangeResult = webTestClient.get().uri("/authentications/api/health/readiness")
+                .exchange().expectStatus().isOk()
+                .expectBody(String.class).returnResult();
+
           LOG.info("response: {}, httpStatus: {}", entityExchangeResult.getResponseBody(), entityExchangeResult.getStatus());
+          assertThat("hello").isEqualTo("hello");
     }
 
 }
