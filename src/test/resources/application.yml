@@ -71,3 +71,7 @@ auth-server:
   oauth2token:
     path: /oauth2/token
     params: ?grant_type=client_credentials
+
+token:
+  audiences: oauth-client
+  issuerUri: http://my-server:9001s

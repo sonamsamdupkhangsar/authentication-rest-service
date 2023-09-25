@@ -106,7 +106,7 @@ health:
     periodSeconds: 5
     failureThreshold: 5
   readiness:
-    path: /authentications/eyapi/health/readiness
+    path: /authentications/api/health/readiness
     port: 8080
     initialDelaySeconds: 5
     periodSeconds: 5
