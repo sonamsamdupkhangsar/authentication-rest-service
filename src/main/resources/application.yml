@@ -2,7 +2,7 @@ logging:
   level:
     root: info
     me:
-      sonam: debug
+      sonam: info
 info:
   app:
     name: Springboot me.sonam.account.Application
@@ -26,11 +26,6 @@ spring:
     password: ${POSTGRES_PASSWORD}
     properties:
       sslMode: ${DB_SSLMODE}
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${DEFAULT_ZONE}
 
 role-rest-service:
   root: ${ROLE_REST_SERVICE}

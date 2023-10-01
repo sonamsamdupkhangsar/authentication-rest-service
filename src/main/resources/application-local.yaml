@@ -15,15 +15,12 @@ EUREKA_PASSWORD: test
 eureka:
   client:
     enabled: true
-
-DEFAULT_ZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
+    serviceUrl:
+      defaultZone: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 
 APPLICATION_REST_SERVICE: http://application-rest-service
 ACCOUNT_REST_SERVICE: http://account-rest-service
 ROLE_REST_SERVICE: http://role-rest-service
 
-# ISSUER_URL here is used for pulling the public certs from authorization-server for token validation
-#ISSUER_URL:  http://10.0.0.28:9001
-#ISSUER_URL: http://authorization-server:9001
 ISSUER_URL: http://api-gateway:9001/issuer #http://my-server:9001
 OAUTH_CLIENTS: oauth-client
