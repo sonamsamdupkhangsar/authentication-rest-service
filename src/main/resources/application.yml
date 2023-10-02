@@ -52,8 +52,8 @@ jwtrequest:
     out: /roles/clientId/(.)*/users/(.)*
     accessToken:
       option: request
-      scopes: message.read message.write
-      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+      scopes: ${REQUEST_SCOPES}
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
 
 token:
   audiences: ${OAUTH_CLIENTS}
