@@ -26,6 +26,12 @@ spring:
     password: ${POSTGRES_PASSWORD}
     properties:
       sslMode: ${DB_SSLMODE}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ISSUER_URI}
+          audiences: ${OAUTH_AUDIENCES}
 
 role-rest-service:
   root: ${ROLE_REST_SERVICE}
@@ -54,7 +60,3 @@ jwtrequest:
       option: request
       scopes: ${REQUEST_SCOPES}
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
-
-token:
-  audiences: ${OAUTH_CLIENTS}
-  issuerUri: ${ISSUER_URL}

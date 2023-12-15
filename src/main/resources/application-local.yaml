@@ -22,8 +22,11 @@ APPLICATION_REST_SERVICE: http://application-rest-service
 ACCOUNT_REST_SERVICE: http://account-rest-service
 ROLE_REST_SERVICE: http://role-rest-service
 
-ISSUER_URL: http://api-gateway:9001/issuer #http://my-server:9001
-OAUTH_CLIENTS: oauth-client
+ISSUER_ADDRESS: http://api-gateway:9001
+
+ISSUER_URI: ${ISSUER_ADDRESS}/issuer
+OAUTH_AUDIENCES: oauth-client
+JWT_SET_URI: ${ISSUER_ADDRESS}/issuer/.well-known/jwks.json
 
 REQUEST_SCOPES: message.read message.write
 BASE64_CLIENT_ID_SECRET: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
