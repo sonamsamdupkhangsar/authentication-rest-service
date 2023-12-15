@@ -75,7 +75,8 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             return Mono.error(new AuthenticationException("no authentication found with username and password"));
                         })
                         //.switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username and password")))
-
+                        // check if user is in organiation
+                        // step: check if there is a record with user with clientId and check if that organizatino has this user in it
                         .flatMap(authentication -> getUserRolesForClientId(authentication.getUserId().toString(),
                                 authenticationPassword.getClientId()))
 
