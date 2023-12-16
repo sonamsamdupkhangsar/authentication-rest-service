@@ -21,6 +21,6 @@ ARG DEPENDENCY=/workspace/app/build/dependency
 COPY --from=build ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
 COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
-ENTRYPOINT ["java","-javaagent:/usr/local/newrelic/newrelic.jar", "-cp","app:app/lib/*","me.sonam.authentication.Application"]
+ENTRYPOINT ["java", "-cp","app:app/lib/*","me.sonam.authentication.Application"]
 
 LABEL org.opencontainers.image.source https://github.com/sonamsamdupkhangsar/authentication-rest-service
