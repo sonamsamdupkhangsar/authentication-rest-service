@@ -23,6 +23,7 @@ Build docker image using included Dockerfile.
 docker build --secret id=USERNAME,src=USERNAME --secret id=PERSONAL_ACCESS_TOKEN,src=PERSONAL_ACCESS_TOKEN . -t sonam/authentication-rest-service
 ```
 
+
 ## Push Docker image to repository
 
 `docker push imageregistry/project-rest-service:1.0`
