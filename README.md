@@ -36,7 +36,7 @@ docker run -e POSTGRES_USERNAME=test \
   -e POSTGRES_SERVICE=localhost:5432 \
  --publish 8082:8080 imageregistry/authentication-rest-service:1.0
  
-  docker run  -e --spring.profiles.active=local -p 9083:8083 -t sonam/authentication-rest-service 
+  docker run  -e --spring.profiles.active=local-docker -p 9083:8083 -t sonam/authentication-rest-service 
 ```
 
 

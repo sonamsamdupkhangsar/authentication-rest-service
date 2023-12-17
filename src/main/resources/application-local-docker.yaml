@@ -1,0 +1,32 @@
+# This yaml file is for local using docker
+server:
+  port: 8083
+
+POSTGRES_USERNAME: test
+POSTGRES_PASSWORD: test
+POSTGRES_DBNAME: authentication
+POSTGRES_SERVICE: host.docker.internal:5432
+DB_SSLMODE: disable
+
+EUREKA_HOST: host.docker.internal:8761
+EUREKA_USER: test
+EUREKA_PASSWORD: test
+
+eureka:
+  client:
+    enabled: true
+    serviceUrl:
+      defaultZone: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
+
+APPLICATION_REST_SERVICE: http://application-rest-service
+ACCOUNT_REST_SERVICE: http://account-rest-service
+ROLE_REST_SERVICE: http://role-rest-service
+
+ISSUER_ADDRESS: http://api-gateway:9001
+
+ISSUER_URI: ${ISSUER_ADDRESS}/issuer
+OAUTH_AUDIENCES: oauth-client
+JWT_SET_URI: ${ISSUER_ADDRESS}/issuer/.well-known/jwks.json
+
+REQUEST_SCOPES: message.read message.write
+BASE64_CLIENT_ID_SECRET: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
