@@ -455,7 +455,7 @@ public class AuthenticationEndpointMockWebServerTest {
         authenticationRepository.findById("user3").as(StepVerifier::create)
                 .expectNextMatches(authentication1 -> {
                     LOG.info("password is newPass?  {}", authentication1.getPassword());
-                    return  authentication1.getPassword().equals("newPass");
+                    return  passwordEncoder.matches("newPass", authentication1.getPassword());
                 })
                 .expectComplete().verify();
     }
@@ -485,7 +485,7 @@ public class AuthenticationEndpointMockWebServerTest {
         authenticationRepository.findById("user3").as(StepVerifier::create)
                 .expectNextMatches(authentication1 -> {
                     LOG.info("password is newPass?  {}", authentication1.getPassword());
-                    return  authentication1.getPassword().equals("newPass");
+                    return  passwordEncoder.matches("newPass", authentication1.getPassword());
                 })
                 .expectComplete().verify();
     }

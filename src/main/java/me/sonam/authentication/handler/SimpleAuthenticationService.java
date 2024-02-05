@@ -190,8 +190,10 @@ public class SimpleAuthenticationService implements AuthenticationService {
      */
     @Override
     public Mono<String> updatePassword(String authenticationId, String password) {
-        LOG.info("update password");
-        authenticationRepository.updatePassword(authenticationId, password)
+        LOG.info("update password for auth: '{}', password: '{}'", authenticationId, password);
+        final String encodedPassword = passwordEncoder.encode(password);
+
+        authenticationRepository.updatePassword(authenticationId, encodedPassword)
                 .subscribe(integer -> LOG.info("row updated: {}", integer));
         return Mono.just("password updated");
     }
