@@ -54,7 +54,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public Mono<List<String>> authenticate(Mono<AuthenticationPassword> authenticationPasswordMono) {
+    public Mono<Map<String, String>> authenticate(Mono<AuthenticationPassword> authenticationPasswordMono) {
         /**
          *  .map(authentication -> !authentication.getActive())
          *                 .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
@@ -78,12 +78,17 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         // check if user is in organiation
                         // step: check if there is a record with user with clientId and check if that organizatino has this user in it
                         .flatMap(authentication -> getUserRolesForClientId(authentication.getUserId().toString(),
-                                authenticationPassword.getClientId()))
-
-                        .flatMap(stringMap -> {
-                            LOG.info("map contains {}", stringMap);
-                            return Mono.just(stringMap);
+                                authenticationPassword.getClientId()).zipWith(Mono.just(authentication))
+                        ).flatMap(objects -> {
+                            return Mono.just(Map.of("roles", objects.getT1().toString()
+                            , "userId", objects.getT2().getUserId().toString()
+                            , "message", "Authentication successful"));
                         }));
+                        /*.flatMap(stringMap -> {
+                            LOG.info("map contains {}", stringMap);
+
+                            return Mono.just(stringMap);
+                        }));*/
     }
 
                 /*

@@ -58,7 +58,7 @@ public class AuthenticationMockRestServiceTest {
 
     @Test
     public void authenticate() {
-        when(service.authenticate(Mockito.any())).thenReturn(Mono.just(List.of( "user")));
+        when(service.authenticate(Mockito.any())).thenReturn(Mono.just(Map.of( "roles", "user", "userId", UUID.randomUUID().toString())));
 
         assertThat(webTestClient).isNotNull();
 
