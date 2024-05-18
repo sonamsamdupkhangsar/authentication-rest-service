@@ -47,7 +47,7 @@ permitpath:
   - path: /authentications/authenticate
   - path: /authentications
     httpMethods: POST
-  - path: /authentications/activate/*
+  - path: /authentications/*/active
     httpMethods: PUT
   - path: /authentications/noauth/password
     httpMethods: PUT
