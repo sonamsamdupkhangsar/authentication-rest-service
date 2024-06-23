@@ -15,7 +15,7 @@ public class WebClientConfig {
     private static final Logger LOG = LoggerFactory.getLogger(WebClientConfig.class);
     @Bean
     public WebClient.Builder webClientBuilder() {
-        LOG.info("returning load balanced webclient part 2");
+        LOG.info("returning non load balanced webclient part 2");
         return WebClient.builder();
     }
 

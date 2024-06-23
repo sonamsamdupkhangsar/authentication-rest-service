@@ -23,6 +23,7 @@ Build docker image using included Dockerfile.
 docker build --secret id=USERNAME,src=USERNAME --secret id=PERSONAL_ACCESS_TOKEN,src=PERSONAL_ACCESS_TOKEN . -t sonam/authentication-rest-service
 ```
 
+
 ## Push Docker image to repository
 
 `docker push imageregistry/project-rest-service:1.0`
@@ -35,7 +36,7 @@ docker run -e POSTGRES_USERNAME=test \
   -e POSTGRES_SERVICE=localhost:5432 \
  --publish 8082:8080 imageregistry/authentication-rest-service:1.0
  
-  docker run  -e --spring.profiles.active=local -p 9001:9001 -t sonamsamdupkhangsar/auth-server 
+  docker run  -e --spring.profiles.active=local-docker -p 9083:8083 -t sonam/authentication-rest-service 
 ```
 
 

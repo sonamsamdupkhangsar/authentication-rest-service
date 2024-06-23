@@ -35,20 +35,20 @@ spring:
 
 role-rest-service:
   root: ${ROLE_REST_SERVICE}
-  user-role: /roles/clientId/{clientId}/users/{userId}
+  user-role: /roles/client-users/client-id/{clientId}/user-id/{userId}
 
 auth-server:
   root: http://authorization-server/issuer
   oauth2token:
     path: /oauth2/token
-    params: ?grant_type=client_credentials
+    grantType: client_credentials
 
 permitpath:
   - path: /authentications/api/health/*
   - path: /authentications/authenticate
   - path: /authentications
     httpMethods: POST
-  - path: /authentications/activate/*
+  - path: /authentications/*/active
     httpMethods: PUT
   - path: /authentications/noauth/password
     httpMethods: PUT

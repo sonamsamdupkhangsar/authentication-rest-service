@@ -93,6 +93,8 @@ envs:
     value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_AUDIENCES
     value: oauth-client
+  - name: NEW_RELIC_ENABLED
+    value: "false"
 
 health:
   liveness:
@@ -115,3 +117,7 @@ secretFiles:
         name: BASE64_CLIENT_ID_SECRET
       - key: scopes
         name: REQUEST_SCOPES
+  - file: newrelic-secret
+    keys:
+      - key: newrelic.license_key
+        name: NEW_RELIC_LICENSE_KEY

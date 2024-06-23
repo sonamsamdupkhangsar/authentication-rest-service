@@ -31,8 +31,7 @@ public class AuthenticationHandler {
                 .flatMap(s -> {
                     LOG.info("s contains: {}", s);
                     return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(Map.of("message", "Authentication successful",
-                                "roleNames", s));
+                        .bodyValue(s);
                 })
                 .onErrorResume(throwable -> {
                     LOG.error("authenticate failed, message: {}", throwable.getMessage());

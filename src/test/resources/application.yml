@@ -47,7 +47,7 @@ permitpath:
   - path: /authentications/authenticate
   - path: /authentications
     httpMethods: POST
-  - path: /authentications/activate/*
+  - path: /authentications/*/active
     httpMethods: PUT
   - path: /authentications/noauth/password
     httpMethods: PUT
@@ -72,4 +72,4 @@ auth-server:
   root: http://localhost:9001
   oauth2token:
     path: /oauth2/token
-    params: ?grant_type=client_credentials
+    grantType: client_credentials
