@@ -162,15 +162,13 @@ public class AuthenticationEndpointMockWebServerTest {
 
         final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
         final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        // first it will call send hmac to get accesstoken 'jwt/accesstoken'
+        // then return this jwt token again when authentication api calls the jwt-rest-service to get the jwt token
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
         //groupNames=admin1touser, employee
         final String clientRoleGroups = "[{\"roleName\":\"user\"}]";
         // then return this for client role groups api call
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
-        // then return this jwt token again when authentication api calls the jwt-rest-service to get the jwt token
-      //  mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
         LOG.info("call authenticate rest endpoint in this application");
         EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/authenticate")
@@ -187,9 +185,10 @@ public class AuthenticationEndpointMockWebServerTest {
         assertThat(request.getMethod()).isEqualTo("POST");
         assertThat(request.getPath()).startsWith("/oauth2/token");
 
+        LOG.info("then take the roles request");
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
-        assertThat(request.getPath()).startsWith("/roles/clientId/");
+        assertThat(request.getPath()).startsWith("/roles/client-users/client-id/");
 
         /*
         request = mockWebServer.takeRequest();
@@ -203,6 +202,51 @@ public class AuthenticationEndpointMockWebServerTest {
         assertThat(body).isNotEmpty();*/
     }
 
+    /**
+     * this test is similar to the authenticate above but this is for getting roles when the client-id and user-id is associated to a organization-id
+     * @throws InterruptedException
+     */
+    @Test
+    void authenticateWithOrganizationRole() throws InterruptedException {
+        LOG.info("save a authentication object so that we have a valid user with the password");
+        Authentication authentication = new Authentication("user3", passwordEncoder.encode("yakpass"), UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        final String jwt = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+        final String jwtTokenMsg = " {\"token\":\"" + jwt + "\"}";
+        // then return this jwt token again when authentication api calls the jwt-rest-service to get the jwt token
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        //groupNames=admin1touser, employee
+        final String clientRoleGroups = "[{\"roleName\":\"user\"}]";
+        // then return this for client role groups api call
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
+        AuthTransfer authTransfer = new AuthTransfer("user3", "yakpass", UUID.randomUUID(), "clientId-123");
+        authTransfer.setOrganizationId(UUID.randomUUID());
+
+        LOG.info("call authenticate rest endpoint in this application");
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/authenticate")
+                .bodyValue(authTransfer)
+                .exchange().expectStatus().isOk()
+                .expectBody(Map.class).returnResult();
+
+        assertThat(result.getResponseBody().get("message")).isEqualTo("Authentication successful");
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isNotEmpty();
+        LOG.info("start taking request now");
+
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+        LOG.info("then take the roles request");
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("GET");
+        assertThat(request.getPath()).startsWith("/roles/client-organization-users/client-id/"
+                +authTransfer.getClientId()+"/organization-id/"+authTransfer.getOrganizationId()
+                +"/user-id/"+authTransfer.getUserId());
+    }
 
     @Test
     void authenticateBadPassword() throws InterruptedException {
@@ -250,6 +294,7 @@ public class AuthenticationEndpointMockWebServerTest {
     @Test
     public void createAuthenticationAndAuthenticate() throws InterruptedException {
         LOG.info("create authTransfer");
+
         AuthTransfer authTransfer = new AuthTransfer("user4", "pass", UUID.randomUUID(), "clientId-123");
 
         EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications")
@@ -288,7 +333,7 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("then take the roles request");
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
-        assertThat(request.getPath()).startsWith("/roles/clientId/");
+        assertThat(request.getPath()).startsWith("/roles/client-users/client-id/");
 
 /*
         request = mockWebServer.takeRequest();

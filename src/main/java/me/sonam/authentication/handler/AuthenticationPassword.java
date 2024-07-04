@@ -9,6 +9,7 @@ public class AuthenticationPassword {
     private String authenticationId;
     private String password;
     private String clientId;
+    private UUID organizationId;
 
     public AuthenticationPassword() {
 
@@ -19,8 +20,15 @@ public class AuthenticationPassword {
         this.clientId = clientId;
     }
 
+    public void setOrganizationId(UUID organizationId) {
+        this.organizationId = organizationId;
+    }
+
     public String getAuthenticationId() {
         return authenticationId;
+    }
+    public UUID getOrganizationId() {
+        return this.organizationId;
     }
 
     public void setAuthenticationId(String authenticationId) {

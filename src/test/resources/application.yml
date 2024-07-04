@@ -54,19 +54,23 @@ permitpath:
 
 role-rest-service:
   root: http://localhost:{port}
-  user-role: /roles/clientId/{clientId}/users/{userId}
+  user-role: /roles/client-users/client-id/{clientId}/user-id/{userId}
+  client-organization-user-role: ${role-rest-service.root}/roles/client-organization-users/client-id/{clientId}/organization-id/{organizationId}/user-id/{userId}
+  #/roles/clientId/{clientId}/users/{userId}
 
 eureka:
   client:
     enabled: false
 
-jwtrequest:
+requestFilters:
   - in:  /authentications/authenticate
-    out: /roles/clientId/(.)*/users/(.)*
+    out: /roles/client-users/client-id/(.)*/user-id/(.)*,
+      /roles/client-organization-users/client-id/(.)*/organization-di/(.)*/user-id/(.)*
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+
 
 auth-server:
   root: http://localhost:9001

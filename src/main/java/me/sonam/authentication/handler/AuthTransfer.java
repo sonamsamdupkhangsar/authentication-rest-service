@@ -11,6 +11,7 @@ public class AuthTransfer {
     private UUID userId;
 
     private String clientId;
+    private UUID organizationId;
 
     public AuthTransfer() {
 
@@ -20,6 +21,14 @@ public class AuthTransfer {
         this.password = password;
         this.userId = userId;
         this.clientId = clientId;
+    }
+
+    public UUID getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(UUID organizationId) {
+        this.organizationId = organizationId;
     }
 
     public String getAuthenticationId() {

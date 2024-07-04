@@ -36,6 +36,7 @@ spring:
 role-rest-service:
   root: ${ROLE_REST_SERVICE}
   user-role: /roles/client-users/client-id/{clientId}/user-id/{userId}
+  client-organization-user-role: ${role-rest-service.root}/roles/client-organization-users/client-id/{clientId}/organization-id/{organizationId}/user-id/{userId}
 
 auth-server:
   root: http://authorization-server/issuer
@@ -53,9 +54,10 @@ permitpath:
   - path: /authentications/noauth/password
     httpMethods: PUT
 
-jwtrequest:
+requestFilters:
   - in:  /authentications/authenticate
-    out: /roles/clientId/(.)*/users/(.)*
+    out: /roles/client-users/client-id/(.)*/user-id/(.)*,
+      /roles/client-organization-users/client-id/(.)*/organization-id/(.)*/user-id/(.)*
     accessToken:
       option: request
       scopes: ${REQUEST_SCOPES}

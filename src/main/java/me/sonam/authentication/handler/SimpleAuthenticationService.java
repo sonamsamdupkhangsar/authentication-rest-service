@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 
 public class SimpleAuthenticationService implements AuthenticationService {
@@ -32,6 +33,9 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
     @Value("${role-rest-service.root}${role-rest-service.user-role}")
     private String roleEp;
+
+    @Value("${role-rest-service.client-organization-user-role}")
+    private String clientOrganizationUserRoleEp;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -77,8 +81,21 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         //.switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username and password")))
                         // check if user is in organiation
                         // step: check if there is a record with user with clientId and check if that organizatino has this user in it
-                        .flatMap(authentication -> getUserRolesForClientId(authentication.getUserId().toString(),
-                                authenticationPassword.getClientId()).zipWith(Mono.just(authentication))
+                        .flatMap(authentication ->
+                                {
+                                    if (authenticationPassword.getOrganizationId() != null) {
+                                        LOG.info("get organization roles when organization-id is set");
+                                        return getClientOrganizationUserRoles(authentication.getUserId(),
+                                                    authenticationPassword.getOrganizationId(),
+                                                    authenticationPassword.getClientId())
+                                                .zipWith(Mono.just(authentication));
+                                    }
+                                    else {
+                                        return getUserRolesForClientId(authentication.getUserId().toString(),
+                                                    authenticationPassword.getClientId())
+                                                .zipWith(Mono.just(authentication));
+                                    }
+                                }
                         ).flatMap(objects -> {
                             return Mono.just(Map.of("roles", objects.getT1().toString()
                             , "userId", objects.getT2().getUserId().toString()
@@ -246,6 +263,33 @@ public class SimpleAuthenticationService implements AuthenticationService {
             });
         }
 
+    private Mono<List<String>> getClientOrganizationUserRoles(UUID userId, UUID organizationId, String clientId) {
+        final String endpoint = clientOrganizationUserRoleEp.replace("{clientId}", clientId)
+                .replace("{organizationId}", organizationId.toString())
+                .replace("{userId}", userId.toString());
+
+        LOG.info("get client organization user role endpoint: {}", endpoint);
+
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(endpoint).retrieve();
+
+        return responseSpec.bodyToFlux(Map.class).flatMap(map -> {
+                    if (map.get("roleName") != null) {
+                        LOG.info("got role: {}", map.get("roleName"));
+                        return Mono.just(map.get("roleName").toString());
+                    } else {
+                        return Mono.just("");
+                    }
+                }).collectList()
+                .onErrorResume(throwable -> {
+                    LOG.error("client-organization-user-roles  rest call failed: {}", throwable.getMessage());
+                    if (throwable instanceof WebClientResponseException) {
+                        WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                        LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+                    }
+
+                    return Mono.just(List.of(""));
+                });
+    }
 
     private Mono<List<String>> getUserRolesForClientId(String userId, String clientId) {
         LOG.info("role endpoint: {}", roleEp);
