@@ -65,7 +65,7 @@ eureka:
 requestFilters:
   - in:  /authentications/authenticate
     out: /roles/client-users/client-id/(.)*/user-id/(.)*,
-      /roles/client-organization-users/client-id/(.)*/organization-di/(.)*/user-id/(.)*
+      /roles/client-organization-users/client-id/(.)*/organization-id/(.)*/user-id/(.)*
     accessToken:
       option: request
       scopes: message.read message.write

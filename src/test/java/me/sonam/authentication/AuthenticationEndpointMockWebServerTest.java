@@ -209,7 +209,8 @@ public class AuthenticationEndpointMockWebServerTest {
     @Test
     void authenticateWithOrganizationRole() throws InterruptedException {
         LOG.info("save a authentication object so that we have a valid user with the password");
-        Authentication authentication = new Authentication("user3", passwordEncoder.encode("yakpass"), UUID.randomUUID(),
+        UUID userId = UUID.randomUUID();
+        Authentication authentication = new Authentication("user3", passwordEncoder.encode("yakpass"), userId,
                 UUID.randomUUID(), true, LocalDateTime.now(), true);
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
 
@@ -222,7 +223,7 @@ public class AuthenticationEndpointMockWebServerTest {
         final String clientRoleGroups = "[{\"roleName\":\"user\"}]";
         // then return this for client role groups api call
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
-        AuthTransfer authTransfer = new AuthTransfer("user3", "yakpass", UUID.randomUUID(), "clientId-123");
+        AuthTransfer authTransfer = new AuthTransfer("user3", "yakpass", userId, "clientId-123");
         authTransfer.setOrganizationId(UUID.randomUUID());
 
         LOG.info("call authenticate rest endpoint in this application");
