@@ -185,7 +185,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                              return authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authTransfer.getAuthenticationId());
                          })
                          .flatMap(integer -> {
-                             LOG.info("create authentication");
+                             LOG.info("create authentication: {}, password: {}", authTransfer.getAuthenticationId(), authTransfer.getPassword());
                              return Mono.just(new Authentication(
                                      authTransfer.getAuthenticationId(), passwordEncoder.encode(authTransfer.getPassword()), authTransfer.getUserId(),
                                      null, false, LocalDateTime.now(), true));
