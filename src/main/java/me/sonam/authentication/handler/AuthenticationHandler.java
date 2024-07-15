@@ -4,6 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -13,6 +16,7 @@ import java.net.URI;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class AuthenticationHandler {
@@ -99,23 +103,19 @@ public class AuthenticationHandler {
                 });
     }
 
-
-
     public Mono<ServerResponse> delete(ServerRequest serverRequest) {
-        LOG.info("delete user");
+        LOG.info("delete authentication");
 
-        return serverRequest.principal()
-                .map(Principal::getName)
-                .flatMap(username ->
-            authenticationService.delete(username)
+        return
+            authenticationService.delete()
                     .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(getMap(Pair.of("message", s))))
                     .onErrorResume(throwable -> {
                         LOG.error("delete authentication failed: {}", throwable.getMessage());
                         return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(getMap(Pair.of("error", throwable.getMessage())));
-                    })
-                );
+                    });
+
     }
 
     @SafeVarargs

@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -221,19 +223,22 @@ public class SimpleAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public Mono<String> delete(String authenticationId) {
-        LOG.info("delete authentication by authenticationId");
+    public Mono<String> delete() {
+        LOG.info("delete authentication");
+        return
+                ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
+                    org.springframework.security.core.Authentication authentication = securityContext.getAuthentication();
 
-        return authenticationRepository.findById(authenticationId)
-                .filter(authentication -> !authentication.getActive())
-                .switchIfEmpty(Mono.error(new AuthenticationException("authentication is active, cannot delete")))
-                .flatMap(authentication ->   authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
-                .flatMap(integer ->
-                    {
-                    LOG.info("integer: {}", integer);
-                    return Mono.just(integer);
-                })
-                .thenReturn("deleted: " + authenticationId);
+                    Jwt jwt = (Jwt) authentication.getPrincipal();
+                    String userIdString = jwt.getClaim("userId");
+                    LOG.info("delete authentication data for userId: {}", userIdString);
+
+                    UUID userId = UUID.fromString(userIdString);
+
+                    return authenticationRepository.deleteByUserId(userId)
+                            .doOnNext(integer -> LOG.info("deleted with rows change: {}", integer))
+                            .thenReturn("deleted Authentication with userId: " + userId);
+                });
     }
 
     private Mono<Map<String, ?>> getUserRoleForClientId(String userId, String clientId) {
