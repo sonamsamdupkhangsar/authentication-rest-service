@@ -66,6 +66,7 @@ requestFilters:
   - in:  /authentications/authenticate
     out: /roles/client-users/client-id/(.)*/user-id/(.)*,
       /roles/client-organization-users/client-id/(.)*/organization-id/(.)*/user-id/(.)*
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
