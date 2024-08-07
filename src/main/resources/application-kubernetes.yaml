@@ -10,3 +10,4 @@ spring:
 eureka:
   client:
       enabled: false
+OAUTH_AUDIENCES: oauth-client, b4dfe3fb-1692-44b8-92ab-366ccc84b539-authzmanager
