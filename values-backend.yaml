@@ -91,8 +91,6 @@ envs:
     value: http://role-rest-service
   - name: ISSUER_URI
     value: https://authorization.sonam.cloud/issuer
-  - name: OAUTH_AUDIENCES
-    value: oauth-client
   - name: NEW_RELIC_ENABLED
     value: "false"
 
