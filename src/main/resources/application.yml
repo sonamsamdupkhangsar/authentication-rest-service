@@ -49,17 +49,11 @@ permitpath:
   - path: /authentications/authenticate
   - path: /authentications
     httpMethods: POST
-  - path: /authentications/*/active
-    httpMethods: PUT
-  - path: /authentications/noauth/password
-    httpMethods: PUT
 
 requestFilters:
   - in:  /authentications/authenticate
     out: /roles/client-users/client-id/(.)*/user-id/(.)*,
       /roles/client-organization-users/client-id/(.)*/organization-id/(.)*/user-id/(.)*
-    inHttpMethods: get
+    inHttpMethods: post
     accessToken:
-      option: request
-      scopes: ${REQUEST_SCOPES}
-      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+      option: forward

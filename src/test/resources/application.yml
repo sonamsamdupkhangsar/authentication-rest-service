@@ -49,8 +49,6 @@ permitpath:
     httpMethods: POST
   - path: /authentications/*/active
     httpMethods: PUT
-  - path: /authentications/noauth/password
-    httpMethods: PUT
 
 role-rest-service:
   root: http://localhost:{port}

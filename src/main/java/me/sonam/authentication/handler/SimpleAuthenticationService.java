@@ -241,6 +241,16 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 });
     }
 
+    @Override
+    public Mono<String> deleteByAuthenticationId(String authenticationId) {
+        LOG.info("delete authentication by authenticationId: '{}'", authenticationId);
+
+        return authenticationRepository.deleteById(authenticationId)
+                .doOnNext(integer -> LOG.info("deleted with rows change: {}", integer))
+                .thenReturn("deleted Authentication with authenticationId: " + authenticationId+" completed");
+
+    }
+
     private Mono<Map<String, ?>> getUserRoleForClientId(String userId, String clientId) {
             LOG.info("role endpoint: {}", roleEp);
             WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(

@@ -115,6 +115,23 @@ public class AuthenticationHandler {
                         return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(getMap(Pair.of("error", throwable.getMessage())));
                     });
+    }
+
+    public Mono<ServerResponse> deleteByAuthenticationId(ServerRequest serverRequest) {
+        LOG.info("delete authentication by authenticationId");
+        LOG.trace("this method is called by user-rest-service during user sign-up to delete any orphan authentication with authenticationId");
+
+        String authenticationId = serverRequest.pathVariable("authenticationId");
+
+        return
+                authenticationService.deleteByAuthenticationId(authenticationId)
+                        .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(getMap(Pair.of("message", s))))
+                        .onErrorResume(throwable -> {
+                            LOG.error("delete authentication by authenticationId failed: {}", throwable.getMessage());
+                            return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(getMap(Pair.of("error", throwable.getMessage())));
+                        });
 
     }
 
