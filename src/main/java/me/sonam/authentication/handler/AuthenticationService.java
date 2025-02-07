@@ -21,5 +21,6 @@ public interface AuthenticationService {
     // requires jwt
     Mono<String> updatePassword(String authenticationId, String password);
     // requires jwt
-    Mono<String> delete(String authenticationId);
+    Mono<String> delete();
+    Mono<String> deleteByAuthenticationId(String authenticationId);
 }

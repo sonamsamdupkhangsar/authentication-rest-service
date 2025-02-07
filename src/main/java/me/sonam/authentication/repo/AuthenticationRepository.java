@@ -10,6 +10,8 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 public interface AuthenticationRepository extends ReactiveCrudRepository<Authentication, String> {
+    Mono<Integer> deleteByUserId(UUID userId);
+    Mono<Authentication> findByUserId(UUID userId);
     Mono<Integer> deleteByAuthenticationIdAndActiveFalse(String authenticationId);
     Mono<Boolean> existsByIdAndActiveTrue(String var1);
     Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String authenticationId);

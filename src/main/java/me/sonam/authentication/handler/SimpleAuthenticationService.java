@@ -1,6 +1,7 @@
 package me.sonam.authentication.handler;
 
 import jakarta.annotation.PostConstruct;
+import me.sonam.authentication.carrier.ClientOrganizationUserWithRole;
 import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
 import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
@@ -8,7 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -18,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 public class SimpleAuthenticationService implements AuthenticationService {
@@ -221,19 +226,32 @@ public class SimpleAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public Mono<String> delete(String authenticationId) {
-        LOG.info("delete authentication by authenticationId");
+    public Mono<String> delete() {
+        LOG.info("delete authentication");
+        return
+                ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
+                    org.springframework.security.core.Authentication authentication = securityContext.getAuthentication();
 
-        return authenticationRepository.findById(authenticationId)
-                .filter(authentication -> !authentication.getActive())
-                .switchIfEmpty(Mono.error(new AuthenticationException("authentication is active, cannot delete")))
-                .flatMap(authentication ->   authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
-                .flatMap(integer ->
-                    {
-                    LOG.info("integer: {}", integer);
-                    return Mono.just(integer);
-                })
-                .thenReturn("deleted: " + authenticationId);
+                    Jwt jwt = (Jwt) authentication.getPrincipal();
+                    String userIdString = jwt.getClaim("userId");
+                    LOG.info("delete authentication data for userId: {}", userIdString);
+
+                    UUID userId = UUID.fromString(userIdString);
+
+                    return authenticationRepository.deleteByUserId(userId)
+                            .doOnNext(integer -> LOG.info("deleted with rows change: {}", integer))
+                            .thenReturn("deleted Authentication with userId: " + userId);
+                });
+    }
+
+    @Override
+    public Mono<String> deleteByAuthenticationId(String authenticationId) {
+        LOG.info("delete authentication by authenticationId: '{}'", authenticationId);
+
+        return authenticationRepository.deleteById(authenticationId)
+                .doOnNext(integer -> LOG.info("deleted with rows change: {}", integer))
+                .thenReturn("deleted Authentication with authenticationId: " + authenticationId+" completed");
+
     }
 
     private Mono<Map<String, ?>> getUserRoleForClientId(String userId, String clientId) {
@@ -272,18 +290,14 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().get().uri(endpoint).retrieve();
 
-        return responseSpec.bodyToFlux(Map.class).flatMap(map -> {
-                    if (map.get("roleName") != null) {
-                        LOG.info("got role: {}", map.get("roleName"));
-                        return Mono.just(map.get("roleName").toString());
-                    } else {
-                        return Mono.just("");
-                    }
-                }).collectList()
+        return responseSpec.bodyToMono(new ParameterizedTypeReference<List<ClientOrganizationUserWithRole>>() {}).flatMap(list -> {
+                   List<String> roles = list.stream().map(clientOrganizationUserWithRole ->  clientOrganizationUserWithRole.getUser().getRole().getName())
+                           .toList();
+                   return Mono.just(roles);
+                })
                 .onErrorResume(throwable -> {
                     LOG.error("client-organization-user-roles  rest call failed: {}", throwable.getMessage());
-                    if (throwable instanceof WebClientResponseException) {
-                        WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
+                    if (throwable instanceof WebClientResponseException webClientResponseException) {
                         LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
                     }
 

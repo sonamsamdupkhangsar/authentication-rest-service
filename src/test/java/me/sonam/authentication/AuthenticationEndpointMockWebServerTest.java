@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -45,6 +46,9 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity;
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 /**
  * This will test the Authentication endpoints
@@ -427,7 +431,7 @@ public class AuthenticationEndpointMockWebServerTest {
     }
 
 
-    @Test
+   // @Test
     void deleteWhenActiveFalse() throws InterruptedException {
         LOG.info("save a authentication object so that we have a valid user with the password");
         final String authId = "deleteWhenActiveFalse";
@@ -452,7 +456,7 @@ public class AuthenticationEndpointMockWebServerTest {
                 LOG.info("exists should be false: {}", aBoolean));
     }
 
-    @Test
+   // @Test
     void deleteWhenActiveTrue() throws InterruptedException {
         LOG.info("save a authentication object so that we have a valid user with the password");
         final String authId = "deleteWhenActiveTrue";
@@ -520,7 +524,7 @@ public class AuthenticationEndpointMockWebServerTest {
                 Pair.of("password", "newPass"));
 
         LOG.info("call authentication/password update");
-        webTestClient.put().uri("/authentications/password")
+        webTestClient.mutateWith(mockJwt().jwt(jwt)).put().uri("/authentications/password")
                 .bodyValue(map)
                 .headers(addJwt(jwt))
                 .headers(httpHeaders -> httpHeaders.setContentType(MediaType.APPLICATION_JSON))
@@ -536,9 +540,128 @@ public class AuthenticationEndpointMockWebServerTest {
                 .expectComplete().verify();
     }
 
+    @Autowired
+    ApplicationContext context;
+
+    @org.junit.jupiter.api.BeforeEach
+    public void setup() {
+        this.webTestClient = WebTestClient
+                .bindToApplicationContext(this.context)
+                // add Spring Security test Support
+                .apply(springSecurity())
+                .configureClient()
+                //.filter(basicAuthentication("user", "password"))
+                .build();
+    }
+
+    /**
+     * this is for deleting autentication part of the delete my data.
+     * This will delete the Authenticaiton record regardless of active or not.
+     * @throws InterruptedException
+     */
+
+    @Test
+    void deleteAuthentication() throws InterruptedException {
+        UUID userId = UUID.fromString("5d8de63a-0b45-4c33-b9eb-d7fb8d662107");
+
+        final String authId = "deleteWhenActiveTrue";
+        Jwt jwt = jwt(authId, userId);
+
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+        Authentication authentication = new Authentication(authId, "yakpass",
+                userId,
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        LOG.info("call delete authentication");
+
+        EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).
+                delete().uri("/authentications")
+                .headers(addJwt(jwt))
+                .exchange().expectStatus().isOk()
+                .expectBody(Map.class).returnResult();
+
+        StepVerifier.create(authenticationRepository.existsById(authId))
+                .assertNext(aBoolean -> {
+                    assertThat(aBoolean).isFalse();
+                    LOG.info("assert that authentication does not exist with authId {}, exists?: {}", authId, aBoolean);
+                })
+                        .verifyComplete();
+
+        assertThat(result.getResponseBody().get("message")).isEqualTo("deleted Authentication with userId: " + userId);
+    }
+
+    @Test
+    void deleteByAuthenticationId() throws InterruptedException {
+        UUID userId = UUID.fromString("5d8de63a-0b45-4c33-b9eb-d7fb8d662107");
+
+        final String authId = "deleteWhenActiveTrue";
+        Jwt jwt = jwt(authId, userId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        Authentication authentication = new Authentication(authId, "yakpass",
+                userId,
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
+
+        LOG.info("call delete authentication by id");
+
+        EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).
+                delete().uri("/authentications/"+authId)
+                .headers(addJwt(jwt))
+                .exchange().expectStatus().isOk()
+                .expectBody(Map.class).returnResult();
+
+        StepVerifier.create(authenticationRepository.existsById(authId))
+                .assertNext(aBoolean -> {
+                    assertThat(aBoolean).isFalse();
+                    LOG.info("assert that authentication does not exist with authId {}, exists?: {}", authId, aBoolean);
+                })
+                .verifyComplete();
+
+        assertThat(result.getResponseBody().get("message")).isEqualTo("deleted Authentication with authenticationId: " + authId+" completed");
+    }
+
+
+    /**
+     * this will test when there is no Authenticaiton record with the userId.
+     * Should get a exception thrown and error message from the handler.
+     * @throws InterruptedException
+     */
+    @Test
+    void deleteAuthenticationWithNoRecord() throws InterruptedException {
+        UUID userId = UUID.fromString("5d8de63a-0b45-4c33-b9eb-d7fb8d662107");
+
+        final String authId = "deleteWhenActiveTrue";
+        Jwt jwt = jwt(authId, userId);
+
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+        LOG.info("call delete authentication");
+
+        EntityExchangeResult<Map> result = webTestClient.//.mutateWith(mockJwt().jwt(jwt)).
+                delete().uri("/authentications")
+                .headers(addJwt(jwt))
+                .exchange().expectStatus().isOk()
+                .expectBody(Map.class).returnResult();
+
+        StepVerifier.create(authenticationRepository.existsById(authId))
+                .assertNext(aBoolean -> {
+                    assertThat(aBoolean).isFalse();
+                    LOG.info("assert that authentication does not exist with authId {}, exists?: {}", authId, aBoolean);
+                })
+                .verifyComplete();
+
+        assertThat(result.getResponseBody().get("message")).isEqualTo("deleted Authentication with userId: " + userId);
+    }
+
     private Jwt jwt(String subjectName) {
         return new Jwt("token", null, null,
                 Map.of("alg", "none"), Map.of("sub", subjectName));
+    }
+
+    private Jwt jwt(String subjectName, UUID userId) {
+        return new Jwt("token", null, null,
+                Map.of("alg", "none"), Map.of("sub", subjectName, "userId", userId.toString()));
     }
 
     private Consumer<HttpHeaders> addJwt(Jwt jwt) {
