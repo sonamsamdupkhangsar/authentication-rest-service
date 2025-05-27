@@ -61,10 +61,9 @@ eureka:
     enabled: false
 
 requestFilters:
-  - in:  /authentications/authenticate
-    out: /roles/client-users/client-id/(.)*/user-id/(.)*,
-      /roles/client-organization-users/client-id/(.)*/organization-id/(.)*/user-id/(.)*
-    inHttpMethods: post
+  - in:
+    out:
+    inHttpMethods:
     accessToken:
       option: request
       scopes: message.read message.write
@@ -73,6 +72,9 @@ requestFilters:
 
 auth-server:
   root: http://localhost:9001
+  context-path: /issuer
   oauth2token:
     path: /oauth2/token
     grantType: client_credentials
+
+tokenExpireSeconds: 3

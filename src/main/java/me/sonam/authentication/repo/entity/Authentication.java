@@ -28,7 +28,9 @@ public class Authentication implements Persistable<String> {
 
     public Authentication(String authenticationId, String password, UUID userId,
                           UUID signinSourceId, Boolean active, LocalDateTime accessDateTime, boolean isNew) {
-        this.authenticationId = authenticationId;
+        if (authenticationId != null) {
+            this.authenticationId = authenticationId.toLowerCase();
+        }
         this.password = password;
         this.userId = userId;
         this.signinSourceId = signinSourceId;
@@ -52,7 +54,9 @@ public class Authentication implements Persistable<String> {
     }
 
     public void setAuthenticationId(String authenticationId) {
-        this.authenticationId = authenticationId;
+        if (authenticationId != null) {
+            this.authenticationId = authenticationId.toLowerCase();
+        }
     }
 
     public String getPassword() {
