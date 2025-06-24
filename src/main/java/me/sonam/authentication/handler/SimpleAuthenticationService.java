@@ -18,11 +18,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 
 public class SimpleAuthenticationService implements AuthenticationService {
@@ -69,19 +67,25 @@ public class SimpleAuthenticationService implements AuthenticationService {
          *                 .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
          */
         return authenticationPasswordMono.flatMap(authenticationPassword ->
-                authenticationRepository.existsById(authenticationPassword.getAuthenticationId())
+                authenticationRepository.existsByAuthenticationIdIgnoreCase(authenticationPassword.getAuthenticationId())
                         .filter(aBoolean -> aBoolean)
                         .switchIfEmpty(Mono.error(new AuthenticationException("authentication does not exist with authId")))
-                        .flatMap(aBoolean -> authenticationRepository.existsByAuthenticationIdAndActiveTrue(authenticationPassword.getAuthenticationId()))
+                        .flatMap(aBoolean -> authenticationRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(authenticationPassword.getAuthenticationId()))
                         .doOnNext(aBoolean -> LOG.info("aboolean is {}", aBoolean))
                         .filter(aBoolean -> aBoolean)
                         .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
-                        .flatMap(aBoolean -> authenticationRepository.findById(authenticationPassword.getAuthenticationId()))
+                        .flatMap(aBoolean -> authenticationRepository.findByAuthenticationIdIgnoreCase(authenticationPassword.getAuthenticationId()))
                         .flatMap(authentication -> {
+                            if (authentication.getPassword() == null) {
+                                LOG.error("password is null, user needs to set their password.");
+                                return Mono.error(new AuthenticationException("User needs to set their password."));
+                            }
+
                             if (passwordEncoder.matches(authenticationPassword.getPassword(), authentication.getPassword())) {
                                 return Mono.just(authentication);
                             }
-                            return Mono.error(new AuthenticationException("no authentication found with username and password"));
+                            //return Mono.error(new AuthenticationException("no authentication found with username and password"));
+                            return Mono.error(new AuthenticationException("Login failed"));
                         })
                         //.switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username and password")))
                         // check if user is in organiation
@@ -106,94 +110,64 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             , "userId", objects.getT2().getUserId().toString()
                             , "message", "Authentication successful"));
                         }));
-                        /*.flatMap(stringMap -> {
-                            LOG.info("map contains {}", stringMap);
-
-                            return Mono.just(stringMap);
-                        }));*/
     }
 
-                /*
-                .flatMap(clientUserRole -> {
-                    // this step sends in a Hmac that contains this application's algorithm, secretKey, and a json
-                    // to jwt-rest-service to validate the request is coming from a verified cliend for getting a
-                    // jwt token
 
-                    // since we don't have the jwt-rest-service anymore, make a request to the authorization server
+    /**
+     * this method is called by the authorization server to validate the username alone.
+     * It will verify the username exists, is active and a password is set.
+     * @param authenticationId the username
+     * @return a string indicating that username exists, is activated and a password is set.
+     */
+    @Override
+    public Mono<String> checkUsernameActiveAndPasswordSet(String authenticationId) {
 
-                    LOG.info("clientUserRole: {}", clientUserRole);
-                    LOG.info("clientUserRole.userRole {}", clientUserRole.get("userRole"));
-                    LOG.info("clientUserRole.groupNames {}", clientUserRole.get("groupNames"));
+        return authenticationRepository.existsByAuthenticationIdIgnoreCase(authenticationId)
+                        .filter(aBoolean -> aBoolean)
+                        .switchIfEmpty(Mono.error(new AuthenticationException("authentication does not exist with authId")))
+                        .flatMap(aBoolean -> authenticationRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(authenticationId))
+                        .doOnNext(aBoolean -> LOG.info("aboolean is {}", aBoolean))
+                        .filter(aBoolean -> aBoolean)
+                        .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your account first")))
+                        .flatMap(aBoolean -> authenticationRepository.findByAuthenticationIdIgnoreCase(authenticationId))
+                        .flatMap(authentication -> {
+                            if (authentication.getPassword() == null) {
+                                LOG.error("password is null, user needs to set their password.");
+                                return Mono.error(new AuthenticationException("User needs to set their password."));
+                            }
 
-                    final StringBuilder userJwtJson = new StringBuilder("{\n");
-                    userJwtJson.append("  \"sub\": \"").append(authenticationPassword.getAuthenticationId()).append("\",\n")
-                            .append("  \"scope\": \""+scope+"\",\n")
-                            .append("  \"clientId\": \"").append(authenticationPassword.getClientId()).append("\",\n")
-                            .append("  \"aud\": \""+audience+"\",\n")
-                            .append("  \"role\": \"").append(clientUserRole.get("userRole")).append("\",\n")
-                            .append("  \"groups\": \"");
-                            final String groupNames = clientUserRole.get("groupNames").toString();
-                            userJwtJson.append(groupNames);
-                            userJwtJson.append("\",\n")
-                            .append("  \"expiresInSeconds\": "+expiresInSeconds+"\n")
-                            .append("}\n");
-
-                    final StringBuilder jsonString = new StringBuilder("{\n");
-                    jsonString.append("  \"sub\": \"").append(hmacClient.getClientId()).append("\",\n")
-                            .append("  \"scope\": \"").append(hmacClient.getClientId()).append("\",\n")
-                            .append("  \"clientId\": \"").append(hmacClient.getClientId()).append("\",\n")
-                            .append("  \"aud\": \"service\",\n")
-                            .append("  \"role\": \"service\",\n")
-                            .append("  \"groups\": \"service\",\n")
-                            .append("  \"expiresInSeconds\": 300,\n")
-                            .append(" \"userJwt\": ").append(userJwtJson.toString())
-                            .append("}\n");
-
-
-                    LOG.info("jsonString: {}", jsonString);
-
-                    final String hmac = Util.getHmac(hmacClient.getAlgorithm(), jsonString.toString(), hmacClient.getSecretKey());
-                    LOG.info("creating hmac for jwt-rest-service: {}", jwtServiceEndpoint);
-
-                    WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(jwtServiceEndpoint)
-                            .headers(httpHeaders -> httpHeaders.add(HttpHeaders.AUTHORIZATION, hmac))
-                            .bodyValue(jsonString)
-                            .accept(MediaType.APPLICATION_JSON)
-                            .retrieve();
-                    return responseSpec.bodyToMono(Map.class).map(map -> {
-                        LOG.info("got jwt token: {}", map.get("token"));
-                        return map.get("token").toString();
-                    }).onErrorResume(throwable -> {
-                                LOG.error("account rest call failed: {}", throwable.getMessage());
-                                if (throwable instanceof WebClientResponseException) {
-                                    WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
-                                    LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
-                                    return Mono.error(new AuthenticationException("jwt rest  api call failed with error: " +
-                                            webClientResponseException.getResponseBodyAsString()));
-                                }
-                                else {
-                                    return Mono.error(new AuthenticationException("Application api call failed with error: " +throwable.getMessage()));
-                                }
-                            });
-                }));
-    }*/
+                            return Mono.just("authenticationId exists, is activated and a password is set");
+                        });
+    }
 
     @Override
     public Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono) {
         LOG.info("Create authentication");
         return authTransferMono
-                .flatMap(authTransfer -> authenticationRepository.existsByAuthenticationIdAndActiveTrue(authTransfer.getAuthenticationId())
+                .flatMap(authTransfer -> authenticationRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(authTransfer.getAuthenticationId())
                          .filter(aBoolean -> !aBoolean)
                          .switchIfEmpty(Mono.error(new AuthenticationException("Authentication is already active with authenticationId")))
                          .flatMap(aBoolean -> {
                              LOG.info("delete by id where active is false");
-                             return authenticationRepository.deleteByAuthenticationIdAndActiveFalse(authTransfer.getAuthenticationId());
+                             return authenticationRepository.deleteByAuthenticationIdIgnoreCaseAndActiveFalse(authTransfer.getAuthenticationId());
                          })
                          .flatMap(integer -> {
                              LOG.info("create authentication: {}, password: {}", authTransfer.getAuthenticationId(), authTransfer.getPassword());
+
+                             String encodedPassword = null;
+
+                             if (authTransfer.getPassword() == null) {
+                                 LOG.info("create authentication password is null, must be initiated by a admin signup of user authentication");
+                             }
+                             else {
+                                 // if user is signing up by themselves then only take the password, set active false
+                                 encodedPassword = passwordEncoder.encode(authTransfer.getPassword());
+                             }
+
                              return Mono.just(new Authentication(
-                                     authTransfer.getAuthenticationId(), passwordEncoder.encode(authTransfer.getPassword()), authTransfer.getUserId(),
-                                     null, false, LocalDateTime.now(), true));
+                                     authTransfer.getAuthenticationId(), encodedPassword, authTransfer.getUserId(),
+                                     null, authTransfer.isActive(), LocalDateTime.now(), true));
+
                          })
                          .flatMap(authentication -> authenticationRepository.save(authentication))
                          .flatMap(authentication1 -> {
@@ -248,7 +222,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
     public Mono<String> deleteByAuthenticationId(String authenticationId) {
         LOG.info("delete authentication by authenticationId: '{}'", authenticationId);
 
-        return authenticationRepository.deleteById(authenticationId)
+        return authenticationRepository.deleteByAuthenticationIdIgnoreCase(authenticationId)
                 .doOnNext(integer -> LOG.info("deleted with rows change: {}", integer))
                 .thenReturn("deleted Authentication with authenticationId: " + authenticationId+" completed");
 

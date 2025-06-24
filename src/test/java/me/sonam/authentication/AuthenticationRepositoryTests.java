@@ -46,18 +46,18 @@ public class AuthenticationRepositoryTests {
 
         authenticationMono.as(StepVerifier::create)
             .assertNext(actual -> {
-                assertThat(actual.getAuthenticationId()).isEqualTo("Yakman");
+                assertThat(actual.getAuthenticationId()).isEqualTo("yakman");
                 assertThat(actual.getPassword()).isEqualTo("yakpass");
                 LOG.info("save and checked mono from saved instance");
             })
             .verifyComplete();
 
         LOG.info("assert findByAuthenticationId and password works");
-        authenticationMono = authenticationRepository.findByAuthenticationIdAndPassword("Yakman", "yakpass");
+        authenticationMono = authenticationRepository.findByAuthenticationIdIgnoreCaseAndPassword("Yakman", "yakpass");
 
         authenticationMono.as(StepVerifier::create)
                 .assertNext(actual -> {
-                    assertThat(actual.getAuthenticationId()).isEqualTo("Yakman");
+                    assertThat(actual.getAuthenticationId()).isEqualTo("yakman");
                     assertThat(actual.getPassword()).isEqualTo("yakpass");
                     LOG.info("asserted findByAuthenticationIdAndPassword api");
                 })
@@ -74,7 +74,7 @@ public class AuthenticationRepositoryTests {
         LOG.info("update password");
         authenticationRepository.updatePassword("Yakman", "newpass").subscribe();
 
-        authenticationRepository.findById("Yakman").as(StepVerifier::create)
+        authenticationRepository.findByAuthenticationIdIgnoreCase("Yakman").as(StepVerifier::create)
                 .expectNextMatches(authentication1 -> {
                     LOG.info("assert the newpass password: {}", authentication1.getPassword());
                     return authentication1.getPassword().equals("newpass");
@@ -83,4 +83,97 @@ public class AuthenticationRepositoryTests {
                 .expectComplete().verify();
     }
 
+    @Test
+    public void deleteByAuthenticationIdIgnoreCaseAndActiveFalse() {
+        LOG.info("test deletion by id and ignore case");
+        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe();
+
+        Authentication authentication2 = new Authentication("Yakman2", "yakpass", UUID.randomUUID(),
+                UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication2).subscribe();
+
+
+        StepVerifier.create(authenticationRepository.existsByAuthenticationIdIgnoreCase("YAKMAN")).assertNext(val -> {
+                    assertThat(val).isTrue();
+                }).verifyComplete();
+
+        StepVerifier.create(authenticationRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue("yAkMan"))
+                .assertNext(aBoolean -> {
+                    LOG.info("assert we have a authenticationId with yakman ignore case");
+                    assertThat(aBoolean).isTrue();
+                }).verifyComplete();
+
+        StepVerifier.create(authenticationRepository.findByAuthenticationIdIgnoreCaseAndPassword("yaKMaN", "yakpass"))
+                .assertNext(authentication1 -> {
+                    assertThat(authentication1.getActive()).isTrue();
+                }).verifyComplete();
+
+        StepVerifier.create(authenticationRepository.findByAuthenticationIdIgnoreCaseAndPassword("yaKMaN", "yakpass"))
+                .expectNextCount(1).verifyComplete();
+
+        authenticationRepository.updatePassword("YAKMAN2", "jump").subscribe();
+
+        StepVerifier.create(authenticationRepository.findByAuthenticationIdIgnoreCase("yakman2")).expectNextCount(1).verifyComplete();
+        StepVerifier.create(authenticationRepository.findByAuthenticationIdIgnoreCase("yAKman2")).assertNext(authentication1 -> {
+            LOG.info("yakman2 password was updated, verify his username");
+            assertThat(authentication1.getAuthenticationId().toLowerCase()).isEqualTo("yakman2");
+        }).verifyComplete();
+    }
+
+    @Test
+    public void findByAuthenticationIdIgnoreCase() {
+        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(),
+                UUID.randomUUID(), false, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe();
+
+        StepVerifier.create(authenticationRepository.findByAuthenticationIdIgnoreCase("yakman")).expectNextCount(1).verifyComplete();
+
+        StepVerifier.create(authenticationRepository.findByAuthenticationIdIgnoreCase("yAKmAn")).assertNext(authentication1 -> {
+            LOG.info("assert found by id ignorecase");
+            assertThat(authentication1.getAuthenticationId().toLowerCase()).isEqualTo("yakman");
+        }).verifyComplete();
+
+        LOG.info("update password");
+        authenticationRepository.deleteByAuthenticationIdIgnoreCaseAndActiveFalse("YaKMAN").subscribe();
+
+        authenticationRepository.findByAuthenticationIdIgnoreCase("YAKMAN").as(StepVerifier::create).expectNextCount(0).verifyComplete();
+    }
+
+    @Test
+    public void updateAuthenticationActiveTrue() {
+        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(),
+                UUID.randomUUID(), false, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe();
+
+        StepVerifier.create(authenticationRepository.findByAuthenticationIdIgnoreCase("YakMan")).expectNextCount(1)
+                        .verifyComplete();
+
+        LOG.info("update by username in mix case to update active to true");
+        authenticationRepository.updateAuthenticationActiveTrue("yAkMAn").subscribe();
+
+        StepVerifier.create(authenticationRepository.findByAuthenticationIdIgnoreCase("YakMan")).assertNext(authentication1 -> {
+            LOG.info("assert active is true");
+            assertThat(authentication1.getActive()).isTrue();
+        }).verifyComplete();
+    }
+
+    @Test
+    public void deleteByAuthenticationIdIgnoreCase() {
+        LOG.info("test deletion by id and ignore case");
+        Authentication authentication = new Authentication("Yakman", "yakpass", UUID.randomUUID(),
+                    UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).subscribe();
+
+        Authentication authentication2 = new Authentication("Yakman2", "yakpass", UUID.randomUUID(),
+                    UUID.randomUUID(), true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication2).subscribe();
+
+        authenticationRepository.deleteByAuthenticationIdIgnoreCase("YAKMAN").subscribe();
+
+        StepVerifier.create(authenticationRepository.existsByAuthenticationIdIgnoreCase("yakMan")).assertNext(val -> {
+            assertThat(val).isFalse();
+        }).verifyComplete();
+    }
 }

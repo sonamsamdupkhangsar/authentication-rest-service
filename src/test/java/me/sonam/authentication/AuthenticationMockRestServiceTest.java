@@ -64,7 +64,7 @@ public class AuthenticationMockRestServiceTest {
 
         LOG.info("authenticate");
         webTestClient.post().uri("/authentications/authenticate")
-                .bodyValue(new AuthTransfer("yakuser", "pass", UUID.randomUUID(), "clientId-123"))
+                .bodyValue(new AuthTransfer("yakuser", "pass", UUID.randomUUID(), "clientId-123", false))
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)
                 .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));

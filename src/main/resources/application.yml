@@ -40,6 +40,7 @@ role-rest-service:
 
 auth-server:
   root: http://authorization-server/issuer
+  context-path: /issuer
   oauth2token:
     path: /oauth2/token
     grantType: client_credentials
@@ -51,9 +52,10 @@ permitpath:
     httpMethods: POST
 
 requestFilters:
-  - in:  /authentications/authenticate
-    out: /roles/client-users/client-id/(.)*/user-id/(.)*,
-      /roles/client-organization-users/client-id/(.)*/organization-id/(.)*/user-ids/(.)*
-    inHttpMethods: post
+  - in:
+    out:
+    inHttpMethods:
     accessToken:
       option: forward
+
+tokenExpireSeconds: 3

@@ -37,7 +37,9 @@ public class Router {
                 .andRoute(DELETE("/authentications").and(accept(MediaType.APPLICATION_JSON)),
                         handler::delete)
                 .andRoute(DELETE("/authentications/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
-                handler::deleteByAuthenticationId);
+                handler::deleteByAuthenticationId)
+                .andRoute(PUT("/authentications/authenticationId").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::verifyAuthenticationId);
 
     }
 }

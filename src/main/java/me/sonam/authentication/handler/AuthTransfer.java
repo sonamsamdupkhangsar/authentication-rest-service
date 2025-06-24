@@ -12,15 +12,19 @@ public class AuthTransfer {
 
     private String clientId;
     private UUID organizationId;
+    private boolean active;
 
     public AuthTransfer() {
 
     }
-    public AuthTransfer(String authenticationId, String password, UUID userId, String clientId) {
-        this.authenticationId = authenticationId;
+    public AuthTransfer(String authenticationId, String password, UUID userId, String clientId, boolean active) {
+        if (authenticationId != null) {
+            this.authenticationId = authenticationId.toLowerCase();
+        }
         this.password = password;
         this.userId = userId;
         this.clientId = clientId;
+        this.active = active;
     }
 
     public UUID getOrganizationId() {
@@ -32,11 +36,13 @@ public class AuthTransfer {
     }
 
     public String getAuthenticationId() {
-        return authenticationId;
+        return authenticationId.toLowerCase();
     }
 
     public void setAuthenticationId(String authenticationId) {
-        this.authenticationId = authenticationId;
+        if (authenticationId != null) {
+            this.authenticationId = authenticationId.toLowerCase();
+        }
     }
 
     public String getPassword() {
@@ -53,6 +59,9 @@ public class AuthTransfer {
 
     public String getClientId() {
         return this.clientId;
+    }
+    public boolean isActive() {
+        return this.active;
     }
 
 }
