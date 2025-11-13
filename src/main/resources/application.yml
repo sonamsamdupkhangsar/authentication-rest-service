@@ -34,7 +34,8 @@ spring:
           audiences: ${OAUTH_AUDIENCES}
 
 role-rest-service:
-  root: ${ROLE_REST_SERVICE}
+  root: http://role-rest-service
+  context: ${role-rest-service.root}/roles
   user-role: /roles/client-users/client-id/{clientId}/user-id/{userId}
   client-organization-user-role: ${role-rest-service.root}/roles/client-organization-users/client-id/{clientId}/organization-id/{organizationId}/user-ids/{userId}
 

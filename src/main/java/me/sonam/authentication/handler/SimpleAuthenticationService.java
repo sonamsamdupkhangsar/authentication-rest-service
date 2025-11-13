@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import me.sonam.authentication.carrier.ClientOrganizationUserWithRole;
 import me.sonam.authentication.repo.AuthenticationRepository;
 import me.sonam.authentication.repo.entity.Authentication;
+import me.sonam.authentication.webclient.RoleWebClient;
 import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,9 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
     private WebClient.Builder webClientBuilder;
 
+    @Autowired
+    private RoleWebClient roleWebClient;
+
     public SimpleAuthenticationService(WebClient.Builder webClientBuilder) {
         this.webClientBuilder = webClientBuilder;
     }
@@ -92,21 +96,24 @@ public class SimpleAuthenticationService implements AuthenticationService {
                         // step: check if there is a record with user with clientId and check if that organizatino has this user in it
                         .flatMap(authentication ->
                                 {
-                                    if (authenticationPassword.getOrganizationId() != null) {
-                                        LOG.info("get organization roles when organization-id is set");
-                                        return getClientOrganizationUserRoles(authentication.getUserId(),
-                                                    authenticationPassword.getOrganizationId(),
-                                                    authenticationPassword.getClientId())
-                                                .zipWith(Mono.just(authentication));
+                                    if (authenticationPassword.getOrganizationId() == null) {
+                                        LOG.info("organization id is missing to get a role, usually it is because of authzmanager login");
+                                        return Mono.just("").zipWith(Mono.just(authentication));
                                     }
                                     else {
-                                        return getUserRolesForClientId(authentication.getUserId().toString(),
-                                                    authenticationPassword.getClientId())
+
+                                        LOG.info("get organization roles when organization-id is set");
+                                        LOG.info("clientId: {}", authenticationPassword.getClientId());
+                                        UUID clientId = UUID.fromString(authenticationPassword.getClientId());
+
+                                        return roleWebClient.getRoleNameForClientOrganizationUser(clientId,
+                                                        authenticationPassword.getOrganizationId(), authentication.getUserId())
                                                 .zipWith(Mono.just(authentication));
                                     }
                                 }
                         ).flatMap(objects -> {
-                            return Mono.just(Map.of("roles", objects.getT1().toString()
+                            LOG.info("roles: {}", objects.getT1());
+                            return Mono.just(Map.of("roles", List.of(objects.getT1()).toString()
                             , "userId", objects.getT2().getUserId().toString()
                             , "message", "Authentication successful"));
                         }));
@@ -267,6 +274,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
         return responseSpec.bodyToMono(new ParameterizedTypeReference<List<ClientOrganizationUserWithRole>>() {}).flatMap(list -> {
                    List<String> roles = list.stream().map(clientOrganizationUserWithRole ->  clientOrganizationUserWithRole.getUser().getRole().getName())
                            .toList();
+                   LOG.info("roles: {}", roles);
                    return Mono.just(roles);
                 })
                 .onErrorResume(throwable -> {
