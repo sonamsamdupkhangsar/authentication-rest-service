@@ -159,8 +159,9 @@ public class RoleWebClient {
         }).onErrorResume(throwable -> {
             LOG.debug("exception occurred in getting role name for ClientOrganizationUserId", throwable);
 
-            LOG.error("failed to get role namefor clientId, organizationId, userId {}", throwable.getMessage());
-            return Mono.empty();
+            LOG.error("failed to get role name for clientId, organizationId, userId {}", throwable.getMessage());
+            LOG.info("return empty string for role when not found");
+            return Mono.just("");
         });
     }
 
