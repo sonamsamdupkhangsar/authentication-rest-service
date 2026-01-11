@@ -1,17 +1,26 @@
 package me.sonam.authentication.handler;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.UUID;
 
 /**
  * this is for parsing the data from serverrequest body to this object
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AuthTransfer {
+    @JsonProperty("authenticationId")
     private String authenticationId;
+    @JsonProperty("password")
     private String password;
+    @JsonProperty("userId")
     private UUID userId;
-
+    @JsonProperty("clientId")
     private String clientId;
+    @JsonProperty("organizationId")
     private UUID organizationId;
+    @JsonProperty("active")
     private boolean active;
 
     public AuthTransfer() {
@@ -24,6 +33,10 @@ public class AuthTransfer {
         this.password = password;
         this.userId = userId;
         this.clientId = clientId;
+        this.active = active;
+    }
+
+    public void setActive(boolean active) {
         this.active = active;
     }
 
@@ -44,7 +57,13 @@ public class AuthTransfer {
             this.authenticationId = authenticationId.toLowerCase();
         }
     }
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
 
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
     public String getPassword() {
         return password;
     }
