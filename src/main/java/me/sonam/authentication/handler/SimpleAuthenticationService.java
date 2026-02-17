@@ -149,10 +149,13 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
     @Override
     public Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono) {
-        LOG.info("Create authentication");
+        LOG.info("building authentication");
         return authTransferMono
-                .flatMap(authTransfer -> authenticationRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(authTransfer.getAuthenticationId())
+                .flatMap(authTransfer -> {
+                    LOG.info("authTransfer.authenticationId: {}", authTransfer);
+                        return authenticationRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(authTransfer.getAuthenticationId())
                          .filter(aBoolean -> !aBoolean)
+                        .doOnNext(aBoolean -> LOG.info("aBoolean is {}", aBoolean))
                          .switchIfEmpty(Mono.error(new AuthenticationException("Authentication is already active with authenticationId")))
                          .flatMap(aBoolean -> {
                              LOG.info("delete by id where active is false");
@@ -180,7 +183,9 @@ public class SimpleAuthenticationService implements AuthenticationService {
                          .flatMap(authentication1 -> {
                              LOG.info("authentication created successfully for authId: {}", authentication1);
                             return Mono.just(authentication1.getAuthenticationId());
-                         }));
+                         });
+                });
+
     }
 
     @Override

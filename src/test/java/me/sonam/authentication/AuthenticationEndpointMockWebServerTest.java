@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.util.Pair;
@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -57,6 +58,7 @@ import static org.springframework.web.reactive.function.client.ExchangeFilterFun
  * For '/authenticate' endpoint it will test that service using a MockWebServer for
  * returning a mocked jwt response.  See {@link Router} for endpoints.
  */
+@AutoConfigureWebTestClient
 @EnableAutoConfiguration
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes=Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -80,12 +82,22 @@ public class AuthenticationEndpointMockWebServerTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
+    @MockitoBean
     ReactiveJwtDecoder jwtDecoder;
 
     @AfterEach
     public void cleanRepo() {
         authenticationRepository.deleteAll().subscribe();
+    }
+
+    @org.junit.jupiter.api.BeforeEach
+    public void webtestClientSetup() {
+        this.webTestClient = WebTestClient
+                .bindToApplicationContext(this.context)
+                // add Spring Security test Support
+                .apply(springSecurity())
+                .configureClient()
+                .build();
     }
 
     @Before
@@ -127,13 +139,15 @@ public class AuthenticationEndpointMockWebServerTest {
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cause save"));
         //AuthenticationPassword authenticationPassword = new AuthenticationPassword("user2", "pass", "clientId-123");
 
-        Map<String, String> map = new HashMap<>();
+       /* Map<String, Object> map = new HashMap<>();
         map.put("authenticationId", "user2");
         map.put("password", "pass");
         map.put("clientId", "clientId-123");
-        map.put("userId", UUID.randomUUID().toString());
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications")
-                .bodyValue(map)
+        map.put("userId", UUID.randomUUID());*/
+        AuthTransfer authTransfer = new AuthTransfer("user2", "pass", UUID.randomUUID(), "clientId-123", false);
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications").contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authTransfer)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
@@ -147,11 +161,9 @@ public class AuthenticationEndpointMockWebServerTest {
 
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to cause save"));
 
-
-        AuthenticationPassword authenticationPassword = new AuthenticationPassword("user2", "pass", "clientId-123");
-
+        AuthTransfer authTransfer = new AuthTransfer("user2", "pass", null, "clientId-123", true);
         EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications")
-                .bodyValue(authenticationPassword)
+                .contentType(MediaType.APPLICATION_JSON).bodyValue(authTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());

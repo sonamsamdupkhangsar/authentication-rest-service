@@ -73,7 +73,7 @@ public class AuthenticationHandler {
     }
 
     public Mono<ServerResponse> activateAuthentication(ServerRequest serverRequest) {
-        LOG.info("create authentication");
+        LOG.info("activate authentication");
         String authenticationId = serverRequest.pathVariable("authenticationId");
 
         return authenticationService.activateAuthentication(authenticationId)
