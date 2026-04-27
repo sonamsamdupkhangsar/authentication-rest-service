@@ -11,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -212,22 +210,12 @@ public class SimpleAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public Mono<String> delete() {
+    public Mono<String> delete(UUID userId) {
         LOG.info("delete authentication");
-        return
-                ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
-                    org.springframework.security.core.Authentication authentication = securityContext.getAuthentication();
-
-                    Jwt jwt = (Jwt) authentication.getPrincipal();
-                    String userIdString = jwt.getClaim("userId");
-                    LOG.info("delete authentication data for userId: {}", userIdString);
-
-                    UUID userId = UUID.fromString(userIdString);
-
-                    return authenticationRepository.deleteByUserId(userId)
-                            .doOnNext(integer -> LOG.info("deleted with rows change: {}", integer))
-                            .thenReturn("deleted Authentication with userId: " + userId);
-                });
+        LOG.info("delete authentication data for explicit userId: {}", userId);
+        return authenticationRepository.deleteByUserId(userId)
+                .doOnNext(integer -> LOG.info("deleted with rows change: {}", integer))
+                .thenReturn("deleted Authentication with userId: " + userId);
     }
 
     @Override

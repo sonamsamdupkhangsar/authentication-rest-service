@@ -34,7 +34,7 @@ public class Router {
                         handler::updatePasswordForLoggedInUser)
                 .andRoute(PUT("/authentications/noauth/password").and(accept(MediaType.APPLICATION_JSON)),
                         handler::updatePasswordNoAuth)
-                .andRoute(DELETE("/authentications").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(DELETE("/authentications/users/{userId}").and(accept(MediaType.APPLICATION_JSON)),
                         handler::delete)
                 .andRoute(DELETE("/authentications/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
                 handler::deleteByAuthenticationId)

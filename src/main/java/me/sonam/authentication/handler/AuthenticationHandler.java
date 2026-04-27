@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class AuthenticationHandler {
@@ -120,16 +121,16 @@ public class AuthenticationHandler {
 
     public Mono<ServerResponse> delete(ServerRequest serverRequest) {
         LOG.info("delete authentication");
-
-        return
-            authenticationService.delete()
-                    .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(Map.of("message", s)))
-                    .onErrorResume(throwable -> {
-                        LOG.error("delete authentication failed: {}", throwable.getMessage());
-                        return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(Map.of("error", throwable.getMessage()));
-                    });
+        return Mono.just(serverRequest.pathVariable("userId"))
+                .map(UUID::fromString)
+                .flatMap(authenticationService::delete)
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(Map.of("message", s)))
+                .onErrorResume(throwable -> {
+                    LOG.error("delete authentication failed: {}", throwable.getMessage());
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(Map.of("error", throwable.getMessage()));
+                });
     }
 
     public Mono<ServerResponse> deleteByAuthenticationId(ServerRequest serverRequest) {
