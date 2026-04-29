@@ -587,7 +587,7 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("call delete authentication");
 
         EntityExchangeResult<Map> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).
-                delete().uri("/authentications")
+                delete().uri("/authentications/users/" + userId)
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .expectBody(Map.class).returnResult();
@@ -650,7 +650,7 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("call delete authentication");
 
         EntityExchangeResult<Map> result = webTestClient.//.mutateWith(mockJwt().jwt(jwt)).
-                delete().uri("/authentications")
+                delete().uri("/authentications/users/" + userId)
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .expectBody(Map.class).returnResult();
