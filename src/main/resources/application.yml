@@ -30,7 +30,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${ISSUER_URI}
+          jwk-set-uri: ${JWT_SET_URI}
           audiences: ${OAUTH_AUDIENCES}
 
 role-rest-service:
@@ -40,8 +40,8 @@ role-rest-service:
   client-organization-user-role: ${role-rest-service.root}/roles/client-organization-users/client-id/{clientId}/organization-id/{organizationId}/user-ids/{userId}
 
 auth-server:
-  root: http://authorization-server/issuer
-  context-path: /issuer
+  root: http://authorization-server
+  context-path:
   oauth2token:
     path: /oauth2/token
     grantType: client_credentials

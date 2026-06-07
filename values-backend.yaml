@@ -5,6 +5,8 @@
 replicaCount: 1
 
 image:
+  repository: ghcr.io/sonamsamdupkhangsar/authentication-rest-service
+  tag: multitenancy
   pullPolicy: Always
 
 imagePullSecrets:
@@ -14,12 +16,25 @@ fullnameOverride: "authentication-rest-service"
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: false
+  create: true
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
+
+rbac:
+  create: true
+  rules:
+    - apiGroups:
+        - ""
+      resources:
+        - services
+        - endpoints
+      verbs:
+        - get
+        - list
+        - watch
 
 podSecurityContext: {}
 # fsGroup: 2000
@@ -54,18 +69,22 @@ ingress:
       hosts:
         - "*.sonam.cloud"
 
+httproute:
+  gatewayName: ""
+  namespace: "main"
+  hostnames:
+    - "platform.openissuer.com"
+  httpsListenerName: "https-platform"
+  httpListenerName: "http-platform"
+  pathPrefix: "/authentications"
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-#   memory: 128Mi
+resources:
+  requests:
+    cpu: 150m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 768Mi
 
 #nodeSelector:
 #  node.kubernetes.io/instance-type: s-1vcpu-2gb
@@ -77,13 +96,23 @@ affinity: {}
 
 postgres:
   port: "5432"
-  service: authentication-minimal-cluster
-  secretfile: sonam.authentication-minimal-cluster.credentials.postgresql.acid.zalan.do
+  service: authentication-db-rw
+  secretfile: authentication-db-app
   dbname: authentication
 
 envs:
+  - name: JAVA_TOOL_OPTIONS
+    value: "-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=25"
   - name: DB_SSLMODE
-    value: REQUIRE
+    value: disable
+  - name: OAUTH_AUDIENCES
+    value: oauth-client
+  - name: JWT_SET_URI
+    value: https://platform.openissuer.com/issuer/oauth2/jwks
+  - name: SPRING_PROFILES_ACTIVE
+    value: kubernetes
+  - name: SPRING_CLOUD_KUBERNETES_DISCOVERY_NAMESPACES_0
+    value: main
   - name: APPLICATION_REST_SERVICE
     value: http://application-rest-service
   - name:  ACCOUNT_REST_SERVICE
@@ -91,7 +120,7 @@ envs:
   - name: ROLE_REST_SERVICE
     value: http://role-rest-service
   - name: ISSUER_URI
-    value: https://authorization.sonam.cloud/issuer
+    value: https://platform.openissuer.com/issuer
   - name: NEW_RELIC_ENABLED
     value: "false"
 
@@ -109,14 +138,4 @@ health:
     periodSeconds: 5
     failureThreshold: 5
 
-secretFiles:
-  - file: service-service-client-credential-flow-secret
-    keys:
-      - key: base64EncodedClientIdSecret
-        name: BASE64_CLIENT_ID_SECRET
-      - key: scopes
-        name: REQUEST_SCOPES
-  - file: newrelic-secret
-    keys:
-      - key: newrelic.license_key
-        name: NEW_RELIC_LICENSE_KEY
+secretFiles: []
