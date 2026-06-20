@@ -17,19 +17,19 @@ public class WebClientConfig {
     @Value("${tokenExpireSeconds:1}")
     private int tokenExpireSeconds;
 
-    @Bean
-    public WebClient.Builder webClientBuilder() {
-        LOG.info("returning non load balanced webclient part 2");
+    @Bean("serviceWebClientBuilder")
+    public WebClient.Builder serviceWebClientBuilder() {
+        LOG.info("returning non load balanced service webclient builder");
         return WebClient.builder();
     }
 
     @Bean
     public ReactiveRequestContextHolder reactiveRequestContextHolder() {
-        return new ReactiveRequestContextHolder(webClientBuilder(), tokenExpireSeconds);
+        return new ReactiveRequestContextHolder(serviceWebClientBuilder(), tokenExpireSeconds);
     }
 
     @Bean
     public SimpleAuthenticationService userAccountService() {
-        return new SimpleAuthenticationService(webClientBuilder());
+        return new SimpleAuthenticationService(serviceWebClientBuilder());
     }
 }

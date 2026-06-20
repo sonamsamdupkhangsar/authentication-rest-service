@@ -2,10 +2,10 @@ package me.sonam.authentication;
 
 import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
+import au.com.dius.pact.consumer.dsl.PactBuilder;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
-import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.V4Pact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +28,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * This will create a pact using {@link AuthenticationConsumerIntegTest#createPact(PactDslWithProvider)}
+ * This will create a pact using {@link AuthenticationConsumerIntegTest#createPact(PactBuilder)}
  * The pact is then published using `mvn pact:publish command
  */
 
@@ -46,7 +46,7 @@ public class AuthenticationConsumerIntegTest {
     private final String jsonBody = "{\"userRole\":\"user\",\"groupNames\":[\"admin1touser\",\"employee\"]}";
 
     @Pact(provider="application-rest-service", consumer="authentication-rest-service")
-    public RequestResponsePact createPact(PactDslWithProvider builder) throws Exception {
+    public V4Pact createPact(PactBuilder builder) throws Exception {
         LOG.info("create pact");
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
@@ -58,7 +58,7 @@ public class AuthenticationConsumerIntegTest {
                 .uuid("id")
                 .stringType("issuer", "sonam.cloud");
 
-        return builder
+        return builder.usingLegacyDsl()
                 .uponReceiving("get client role")
                 .path("/applications/clients/"+clientId+"/users/"+userId)
                 .matchHeader("Authorization", "Bearer .*",  "Bearer eyJraWQiOiJ0aGlzLWlzLXJ")
@@ -67,7 +67,7 @@ public class AuthenticationConsumerIntegTest {
                 .matchHeader("Content-Type", "application/json")
                 .status(200)
                 .body(jsonBody)
-                .toPact();
+                .toPact(V4Pact.class);
     }
 
     /**
