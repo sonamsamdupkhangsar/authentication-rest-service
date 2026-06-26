@@ -110,7 +110,7 @@ envs:
   - name: JWT_SET_URI
     value: https://platform.openissuer.com/issuer/oauth2/jwks
   - name: SPRING_PROFILES_ACTIVE
-    value: kubernetes
+    value: kubernetes,non-eureka
   - name: SPRING_CLOUD_KUBERNETES_DISCOVERY_NAMESPACES_0
     value: "{{ .Release.Namespace }}"
   - name: APPLICATION_REST_SERVICE
