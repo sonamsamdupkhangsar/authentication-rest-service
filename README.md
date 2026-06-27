@@ -5,11 +5,11 @@ user-rest-service during user signup and also used for authentication
 using username/password and api-key to generate a JWT.
 
 ## Run locally using profile
-Use the following to run local profile which will pick up properties defined in the `application-local.yml` :
+Use the following to run the Eureka profile, which picks up properties defined in `application-eureka.yaml`:
 
 
 ```
-./gradlew bootRun --args="--spring.profiles.active=local"
+./gradlew bootRun --args="--spring.profiles.active=eureka"
 ```
 Or you can do something like following too to specify the db server properties:
  
