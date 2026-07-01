@@ -34,7 +34,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/sonamsamdupkhangsar/authentication-rest-service:multitenancy
+          tags: ghcr.io/sonamsamdupkhangsar/authentication-rest-service:latest
           secrets: |
             USERNAME=${{ github.actor }}
             PERSONAL_ACCESS_TOKEN=${{ secrets.PERSONAL_ACCESS_TOKEN }}
