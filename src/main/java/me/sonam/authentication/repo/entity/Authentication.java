@@ -106,9 +106,7 @@ public class Authentication implements Persistable<String> {
     @Override
     public String toString() {
         return "Authentication{" +
-                "authenticationId='" + authenticationId + '\'' +
-                ", password='" + password + '\'' +
-                ", userId=" + userId +
+                "userId=" + userId +
                 ", signinSourceId=" + signinSourceId +
                 ", active=" + active +
                 ", accessDateTime=" + accessDateTime +

@@ -76,7 +76,7 @@ public class AuthenticationRepositoryTests {
 
         authenticationRepository.findByAuthenticationIdIgnoreCase("Yakman").as(StepVerifier::create)
                 .expectNextMatches(authentication1 -> {
-                    LOG.info("assert the newpass password: {}", authentication1.getPassword());
+                    LOG.info("assert the updated password hash");
                     return authentication1.getPassword().equals("newpass");
                 }
                 )

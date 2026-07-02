@@ -150,7 +150,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
         LOG.info("building authentication");
         return authTransferMono
                 .flatMap(authTransfer -> {
-                    LOG.info("authTransfer.authenticationId: {}", authTransfer);
+                    LOG.info("create authentication requested for userId {}", authTransfer.getUserId());
                         return authenticationRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(authTransfer.getAuthenticationId())
                          .filter(aBoolean -> !aBoolean)
                         .doOnNext(aBoolean -> LOG.info("aBoolean is {}", aBoolean))
@@ -160,7 +160,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                              return authenticationRepository.deleteByAuthenticationIdIgnoreCaseAndActiveFalse(authTransfer.getAuthenticationId());
                          })
                          .flatMap(integer -> {
-                             LOG.info("create authentication: {}, password: {}", authTransfer.getAuthenticationId(), authTransfer.getPassword());
+                             LOG.info("create authentication for userId {}", authTransfer.getUserId());
 
                              String encodedPassword = null;
 
@@ -179,7 +179,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                          })
                          .flatMap(authentication -> authenticationRepository.save(authentication))
                          .flatMap(authentication1 -> {
-                             LOG.info("authentication created successfully for authId: {}", authentication1);
+                             LOG.info("authentication created successfully for userId {}", authentication1.getUserId());
                             return Mono.just(authentication1.getAuthenticationId());
                          });
                 });
@@ -201,7 +201,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
      */
     @Override
     public Mono<String> updatePassword(String authenticationId, String password) {
-        LOG.info("update password for auth: '{}', password: '{}'", authenticationId, password);
+        LOG.info("update authentication password");
         final String encodedPassword = passwordEncoder.encode(password);
 
         authenticationRepository.updatePassword(authenticationId, encodedPassword)
@@ -220,7 +220,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
 
     @Override
     public Mono<String> deleteByAuthenticationId(String authenticationId) {
-        LOG.info("delete authentication by authenticationId: '{}'", authenticationId);
+        LOG.info("delete authentication by authentication identifier");
 
         return authenticationRepository.deleteByAuthenticationIdIgnoreCase(authenticationId)
                 .doOnNext(integer -> LOG.info("deleted with rows change: {}", integer))
