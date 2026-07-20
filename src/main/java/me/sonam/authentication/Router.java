@@ -24,8 +24,8 @@ public class Router {
     @Bean
     public RouterFunction<ServerResponse> route(AuthenticationHandler handler) {
         LOG.info("building authenticate router function");
-        return RouterFunctions.route(POST("/authentications/authenticate").and(accept(MediaType.APPLICATION_JSON)),
-                handler::authenticate)
+        return RouterFunctions.route(POST("/authentications/verify-password").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::verifyPassword)
                 .andRoute(POST("/authentications").and(accept(MediaType.APPLICATION_JSON)),
                         handler::createAuthentication)
                 .andRoute(PUT("/authentications/{authenticationId}/active").and(accept(MediaType.APPLICATION_JSON)),

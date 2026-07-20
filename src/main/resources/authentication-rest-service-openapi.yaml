@@ -68,10 +68,9 @@ paths:
                   error:
                     type: string
 
-  /authentications/authenticate:
+  /authentications/verify-password:
     post:
-      description: "Authenticate user with authenticationId and password.  This will get client role service in the 
-                  jwt token.  This will return the jwt."
+      description: Verify an active user's authenticationId and password without loading authorization roles.
       requestBody:
         required: true
         content:
@@ -80,16 +79,18 @@ paths:
               $ref: '#/components/schemas/UserAuthTransfer'
       responses:
         '200':
-          description: User authenticated successfully
+          description: Password verified successfully
           content:
-             application/json:
-               schema:
-                 type: object
-                 properties:
-                   message:
-                     type: string
+            application/json:
+              schema:
+                type: object
+                required: [userId]
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
         '400':
-          description: Failed to authenticate user
+          description: Password verification failed
           content:
             application/json:
               schema:

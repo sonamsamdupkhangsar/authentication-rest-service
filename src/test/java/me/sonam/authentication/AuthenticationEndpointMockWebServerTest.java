@@ -188,12 +188,12 @@ public class AuthenticationEndpointMockWebServerTest {
        // mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientRoleGroups));
 
         LOG.info("call authenticate rest endpoint in this application");
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/authenticate")
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/verify-password")
                 .bodyValue(new AuthTransfer("user3", "yakpass", UUID.randomUUID(),"clientId-123", false))
                 .exchange().expectStatus().isOk()
                 .expectBody(Map.class).returnResult();
 
-        assertThat(result.getResponseBody().get("message")).isEqualTo("Authentication successful");
+        assertThat(result.getResponseBody().get("userId")).isEqualTo(authentication.getUserId().toString());
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isNotEmpty();
         LOG.info("start taking request now");
@@ -217,6 +217,22 @@ public class AuthenticationEndpointMockWebServerTest {
         LOG.info("1st request for getting clientRoleGroups with path: {}", request.getPath());
         LOG.info("request: {}", body);
         assertThat(body).isNotEmpty();*/
+    }
+
+    @Test
+    void verifyPasswordReturnsOnlyUserId() {
+        UUID userId = UUID.randomUUID();
+        Authentication authentication = new Authentication("passkey-user", passwordEncoder.encode("yakpass"), userId,
+                null, true, LocalDateTime.now(), true);
+        authenticationRepository.save(authentication).block();
+
+        webTestClient.post().uri("/authentications/verify-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new AuthTransfer("passkey-user", "yakpass", null, null, true))
+                .exchange().expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.userId").isEqualTo(userId.toString())
+                .jsonPath("$.roles").doesNotExist();
     }
 
 
@@ -247,26 +263,14 @@ public class AuthenticationEndpointMockWebServerTest {
         authTransfer.setOrganizationId(UUID.randomUUID());
 
         LOG.info("call authenticate rest endpoint in this application");
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/authenticate")
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/verify-password")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isOk()
                 .expectBody(Map.class).returnResult();
 
-        assertThat(result.getResponseBody().get("message")).isEqualTo("Authentication successful");
+        assertThat(result.getResponseBody().get("userId")).isEqualTo(userId.toString());
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isNotEmpty();
-        LOG.info("start taking request now");
-
-        RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/issuer/oauth2/token");
-
-        LOG.info("then take the roles request");
-        request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("GET");
-        assertThat(request.getPath()).startsWith("/roles/clients/"+clientId+"/organizations/"
-               +authTransfer.getOrganizationId()
-                +"/users/"+authTransfer.getUserId()+"/roles/name");
     }
 
     @Test
@@ -277,7 +281,7 @@ public class AuthenticationEndpointMockWebServerTest {
         authenticationRepository.save(authentication).subscribe(authentication1 -> LOG.info("subscribe to save"));
 
         LOG.info("call authenticate rest endpoint in this application");
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/authenticate")
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/verify-password")
                 .bodyValue(new AuthTransfer("user3", "yakpass2", UUID.randomUUID(),"clientId-123", false))
                 .exchange().expectStatus().isBadRequest()
                 .expectBody(Map.class).returnResult();
@@ -298,7 +302,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
 
         LOG.info("call authenticate rest endpoint in this application");
-        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/authenticate")
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/authentications/verify-password")
                 .bodyValue(new AuthTransfer("user3", "yakpass", UUID.randomUUID(), "clientId-123", false))
                 .exchange().expectStatus().isBadRequest()
                 .expectBody(Map.class).returnResult();
@@ -323,7 +327,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         LOG.info("try authentication with the password being null");
 
-        result = webTestClient.post().uri("/authentications/authenticate")
+        result = webTestClient.post().uri("/authentications/verify-password")
                 .bodyValue(new AuthTransfer("user4", "yakpass2", UUID.randomUUID(),"clientId-123", false))
                 .exchange().expectStatus().isBadRequest()
                 .expectBody(new ParameterizedTypeReference<Map<String, String>>() {}).returnResult();
@@ -362,12 +366,12 @@ public class AuthenticationEndpointMockWebServerTest {
        // mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
         LOG.info("call authenticate rest endpoint in this application");
-        result = webTestClient.post().uri("/authentications/authenticate")
+        result = webTestClient.post().uri("/authentications/verify-password")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isOk()
                 .expectBody(Map.class).returnResult();
 
-        assertThat(result.getResponseBody()).isNotEmpty();
+        assertThat(result.getResponseBody().get("userId")).isEqualTo(authTransfer.getUserId().toString());
 
         LOG.info("take oauth2 token request first: {}", result.getResponseBody());
       //  RecordedRequest request = mockWebServer.takeRequest();
@@ -382,7 +386,7 @@ public class AuthenticationEndpointMockWebServerTest {
 
         LOG.info("now use a bad username to authenticate locally");
         authTransfer.setAuthenticationId("invaliduser");
-        result = webTestClient.post().uri("/authentications/authenticate")
+        result = webTestClient.post().uri("/authentications/verify-password")
                 .bodyValue(authTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 

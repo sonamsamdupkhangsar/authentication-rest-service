@@ -7,13 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface AuthenticationService {
-    /**
-     * this service will authenticate username/password with apikey
-     * @param authTransferMono contains the usernam,password
-     * @return
-     */
-    // no jwt required
-    Mono<Map<String, String>> authenticate(Mono<AuthenticationPassword> authTransferMono);
+    Mono<UUID> verifyPassword(Mono<AuthenticationPassword> authenticationPasswordMono);
     // no jwt required
     Mono<String> createAuthentication(Mono<AuthTransfer> authTransferMono);
     // internal

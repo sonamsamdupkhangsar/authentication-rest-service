@@ -24,17 +24,13 @@ public class AuthenticationHandler {
         this.authenticationService = authenticationService;
     }
 
-    public Mono<ServerResponse> authenticate(ServerRequest serverRequest) {
-        LOG.info("authenticate user");
-
-        return authenticationService.authenticate(serverRequest.bodyToMono(AuthenticationPassword.class))
-                .flatMap(s -> {
-                    LOG.info("s contains: {}", s);
-                    return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(s);
-                })
+    public Mono<ServerResponse> verifyPassword(ServerRequest serverRequest) {
+        LOG.info("verify username and password");
+        return authenticationService.verifyPassword(serverRequest.bodyToMono(AuthenticationPassword.class))
+                .flatMap(userId -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(Map.of("userId", userId.toString())))
                 .onErrorResume(throwable -> {
-                    LOG.error("authenticate failed, message: {}", throwable.getMessage());
+                    LOG.error("password verification failed, message: {}", throwable.getMessage());
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(Map.of("error", throwable.getMessage()));
                 });

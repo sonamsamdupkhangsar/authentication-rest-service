@@ -63,13 +63,14 @@ public class SimpleAuthenticationService implements AuthenticationService {
     }
 
     @Override
-    public Mono<Map<String, String>> authenticate(Mono<AuthenticationPassword> authenticationPasswordMono) {
-        /**
-         *  .map(authentication -> !authentication.getActive())
-         *                 .switchIfEmpty(Mono.error(new AuthenticationException("Authentication not active, activate your acccount first")))
-         */
-        return authenticationPasswordMono.flatMap(authenticationPassword ->
-                authenticationRepository.existsByAuthenticationIdIgnoreCase(authenticationPassword.getAuthenticationId())
+    public Mono<UUID> verifyPassword(Mono<AuthenticationPassword> authenticationPasswordMono) {
+        return authenticationPasswordMono
+                .flatMap(this::verifiedAuthentication)
+                .map(Authentication::getUserId);
+    }
+
+    private Mono<Authentication> verifiedAuthentication(AuthenticationPassword authenticationPassword) {
+        return authenticationRepository.existsByAuthenticationIdIgnoreCase(authenticationPassword.getAuthenticationId())
                         .filter(aBoolean -> aBoolean)
                         .switchIfEmpty(Mono.error(new AuthenticationException("authentication does not exist with authId")))
                         .flatMap(aBoolean -> authenticationRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(authenticationPassword.getAuthenticationId()))
@@ -88,33 +89,7 @@ public class SimpleAuthenticationService implements AuthenticationService {
                             }
                             //return Mono.error(new AuthenticationException("no authentication found with username and password"));
                             return Mono.error(new AuthenticationException("Login failed"));
-                        })
-                        //.switchIfEmpty(Mono.error(new AuthenticationException("no authentication found with username and password")))
-                        // check if user is in organiation
-                        // step: check if there is a record with user with clientId and check if that organizatino has this user in it
-                        .flatMap(authentication ->
-                                {
-                                    if (authenticationPassword.getOrganizationId() == null) {
-                                        LOG.info("organization id is missing to get a role, usually it is because of authzmanager login");
-                                        return Mono.just("").zipWith(Mono.just(authentication));
-                                    }
-                                    else {
-
-                                        LOG.info("get organization roles when organization-id is set");
-                                        LOG.info("clientId: {}", authenticationPassword.getClientId());
-                                        UUID clientId = UUID.fromString(authenticationPassword.getClientId());
-
-                                        return roleWebClient.getRoleNameForClientOrganizationUser(clientId,
-                                                        authenticationPassword.getOrganizationId(), authentication.getUserId())
-                                                .zipWith(Mono.just(authentication));
-                                    }
-                                }
-                        ).flatMap(objects -> {
-                            LOG.info("roles: {}", objects.getT1());
-                            return Mono.just(Map.of("roles", List.of(objects.getT1()).toString()
-                            , "userId", objects.getT2().getUserId().toString()
-                            , "message", "Authentication successful"));
-                        }));
+                        });
     }
 
 
