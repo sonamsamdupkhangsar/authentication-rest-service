@@ -30,7 +30,7 @@ public class AuthenticateWithRemoteEndpoint {
     void authenticate() throws InterruptedException {
         LOG.info("authenticate with remote endpoint using username and password to get a jwt");
 
-        WebClient.ResponseSpec responseSpec = webClient.post().uri("https://authentication-rest-service.sonam.cloud/public/authentications/authenticate")
+        WebClient.ResponseSpec responseSpec = webClient.post().uri("https://authentication-rest-service.sonam.cloud/public/authentications/verify-password")
                 .bodyValue(new AuthTransfer("dummy1234", "12", UUID.randomUUID(), "clientId-123", false))
                 .retrieve();
 
@@ -45,7 +45,7 @@ public class AuthenticateWithRemoteEndpoint {
     public void validateJwt() {
         final String jwt = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkdW1teTEyMzQiLCJpc3MiOiJzb25hbS5jbG91ZCIsImF1ZCI6InNvbmFtLmNsb3VkIiwiZXhwIjoxNjU3NDU2MjYzLCJqdGkiOiI0Y2Y4ZWYxZi1lZjM3LTRkMTctOGEzNC00YTRkNmNjNzVjZjcifQ.laKyiskryOrrFZfrwvc_F3-AnEcT5MO6s9j4iILdjBbOqbB7Evkxqqm00j3wu-MDVWkvWTI4NKFSHeF0R1I-Bw";
 
-        WebClient.ResponseSpec responseSpec = webClient.post().uri("https://authentication-rest-service.sonam.cloud/public/authentications/authenticate")
+        WebClient.ResponseSpec responseSpec = webClient.post().uri("https://authentication-rest-service.sonam.cloud/public/authentications/verify-password")
                 .bodyValue(new AuthTransfer("dummy1234", "12", UUID.randomUUID(), "clientId-123", false))
                 .retrieve();
 

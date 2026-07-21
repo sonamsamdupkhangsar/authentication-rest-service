@@ -51,22 +51,20 @@ public class AuthenticationMockRestServiceTest {
         LOG.info("setup mock");
         MockitoAnnotations.openMocks(this);
         RouterFunction<ServerResponse> routerFunction = RouterFunctions
-                .route(RequestPredicates.POST("/authentications/authenticate"),
-                        handler::authenticate);
+                .route(RequestPredicates.POST("/authentications/verify-password"),
+                        handler::verifyPassword);
         this.webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();
     }
 
     @Test
-    public void authenticate() {
-        when(service.authenticate(Mockito.any())).thenReturn(Mono.just(Map.of( "roles", "user", "userId", UUID.randomUUID().toString())));
+    public void verifyPassword() {
+        UUID userId = UUID.randomUUID();
+        when(service.verifyPassword(Mockito.any())).thenReturn(Mono.just(userId));
 
-        assertThat(webTestClient).isNotNull();
-
-        LOG.info("authenticate");
-        webTestClient.post().uri("/authentications/authenticate")
-                .bodyValue(new AuthTransfer("yakuser", "pass", UUID.randomUUID(), "clientId-123", false))
+        webTestClient.post().uri("/authentications/verify-password")
+                .bodyValue(new AuthTransfer("yakuser", "pass", null, null, false))
                 .exchange().expectStatus().isOk()
-                .expectBody(String.class)
-                .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
+                .expectBody()
+                .jsonPath("$.userId").isEqualTo(userId.toString());
     }
 }

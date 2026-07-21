@@ -48,7 +48,7 @@ auth-server:
 
 permitpath:
   - path: /authentications/api/health/*
-  - path: /authentications/authenticate
+  - path: /authentications/verify-password
   - path: /authentications
     httpMethods: POST
 
