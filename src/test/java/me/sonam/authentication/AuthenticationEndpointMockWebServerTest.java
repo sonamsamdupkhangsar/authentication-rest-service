@@ -438,12 +438,13 @@ public class AuthenticationEndpointMockWebServerTest {
         //activate endpoint is called by account-rest-service, so account-rest-service will use its own jwt
         EntityExchangeResult<Map> result = webTestClient.put().uri("/authentications/user3/active")
                 .headers(addJwt(jwt))
-                .exchange().expectStatus().isOk()
+                .exchange().expectStatus().isBadRequest()
                 .expectBody(Map.class)
                 .returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody().get("message")).isEqualTo("activated: user3");
+        assertThat(result.getResponseBody().get("error"))
+                .isEqualTo("authentication does not exist with authenticationId: user3");
 
     }
 
