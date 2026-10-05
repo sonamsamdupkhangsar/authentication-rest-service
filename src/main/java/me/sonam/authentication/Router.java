@@ -30,6 +30,8 @@ public class Router {
                         handler::createAuthentication)
                 .andRoute(PUT("/authentications/{authenticationId}/active").and(accept(MediaType.APPLICATION_JSON)),
                         handler::activateAuthentication)
+                .andRoute(GET("/authentications/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::getUserIdForAuthenticationId)
                 .andRoute(PUT("/authentications/password").and(accept(MediaType.APPLICATION_JSON)),
                         handler::updatePasswordForLoggedInUser)
                 .andRoute(PUT("/authentications/noauth/password").and(accept(MediaType.APPLICATION_JSON)),

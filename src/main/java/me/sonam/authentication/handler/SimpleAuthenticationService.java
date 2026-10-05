@@ -165,8 +165,20 @@ public class SimpleAuthenticationService implements AuthenticationService {
     public Mono<String> activateAuthentication(String authenticationId) {
         LOG.info("activate authentication");
 
-        return authenticationRepository.updateAuthenticationActiveTrue(authenticationId)
+        return authenticationRepository.findByAuthenticationIdIgnoreCase(authenticationId)
+                .switchIfEmpty(Mono.error(new AuthenticationException(
+                        "authentication does not exist with authenticationId: " + authenticationId)))
+                .flatMap(authentication -> authenticationRepository
+                        .updateAuthenticationActiveTrue(authenticationId))
                 .thenReturn("activated: "+authenticationId);
+    }
+
+    @Override
+    public Mono<UUID> getUserId(String authenticationId) {
+        return authenticationRepository.findByAuthenticationIdIgnoreCase(authenticationId)
+                .switchIfEmpty(Mono.error(new AuthenticationException(
+                        "authentication does not exist with authenticationId: " + authenticationId)))
+                .map(authentication -> authentication.getUserId());
     }
 
     /**
