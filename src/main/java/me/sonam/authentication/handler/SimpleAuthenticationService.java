@@ -173,6 +173,14 @@ public class SimpleAuthenticationService implements AuthenticationService {
                 .thenReturn("activated: "+authenticationId);
     }
 
+    @Override
+    public Mono<UUID> getUserId(String authenticationId) {
+        return authenticationRepository.findByAuthenticationIdIgnoreCase(authenticationId)
+                .switchIfEmpty(Mono.error(new AuthenticationException(
+                        "authentication does not exist with authenticationId: " + authenticationId)))
+                .map(authentication -> authentication.getUserId());
+    }
+
     /**
      * this will be called by a non-logged in user, whcih will have a secret
      * @param authenticationId

@@ -79,6 +79,14 @@ public class AuthenticationHandler {
                                 .bodyValue(Map.of("error", throwable.getMessage())));
     }
 
+    public Mono<ServerResponse> getUserIdForAuthenticationId(ServerRequest serverRequest) {
+        return authenticationService.getUserId(serverRequest.pathVariable("authenticationId"))
+                .flatMap(userId -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(Map.of("userId", userId.toString())))
+                .onErrorResume(throwable -> ServerResponse.badRequest()
+                        .bodyValue(Map.of("error", throwable.getMessage())));
+    }
+
     public Mono<ServerResponse> updatePasswordForLoggedInUser(ServerRequest serverRequest) {
         LOG.info("update password for logged-in user");
 
